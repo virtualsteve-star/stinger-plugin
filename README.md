@@ -39,17 +39,23 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 
 ## Project Status
 
-🚧 **Under Development** - This project is in active development. The execution plan outlines an 8-10 week development timeline.
+🚧 **Under Development** - This project is in active development. MVP targeted for 5-week development cycle.
 
-### Current Phase
-- [ ] Phase 1: Project Setup & Infrastructure
-- [ ] Phase 2: Content Script Development
-- [ ] Phase 3: UI Components & Response Monitoring
-- [ ] Phase 4: Background Worker & API Integration
-- [ ] Phase 5: Security & Enterprise Features
-- [ ] Phase 6: Testing & Optimization
-- [ ] Phase 7: CI/CD & Release Engineering
-- [ ] Phase 8: Documentation & Pilot Program
+### Development Progress
+- ✅ **Phase 1: Project Setup & Infrastructure** (Complete)
+  - TypeScript + Vite build system configured
+  - Chrome Extension Manifest V3 structure
+  - Testing infrastructure (Jest + Playwright)
+  - Basic extension loads in Chrome
+  
+- 🔄 **Phase 2: Core Infrastructure** (In Progress)
+  - Message passing system
+  - Storage abstraction
+  - API client development
+  
+- ⏳ **Phase 3: Content Script Development** (Upcoming)
+- ⏳ **Phase 4: Background Worker & API Integration** (Upcoming)
+- ⏳ **Phase 5: Testing & Demo Preparation** (Upcoming)
 
 ## Prerequisites
 
@@ -57,7 +63,7 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 - Chrome 118+ for development
 - Access to Stinger Policy API (provided by [Stinger core](https://github.com/virtualsteve-star/stinger))
 
-## Development Setup
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -67,11 +73,35 @@ cd stinger-plugin
 # Checkout development branch
 git checkout dev
 
-# Install dependencies (once package.json is created)
+# Install dependencies and build
 npm install
 
-# Start development build (once configured)
-npm run dev
+# Load in Chrome
+1. Open chrome://extensions/
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the 'dist' directory
+
+# Start development
+npm run build:watch  # Auto-rebuild on changes
+```
+
+## Development
+
+```bash
+# Building
+npm run build        # Production build
+npm run build:watch  # Development with auto-reload
+
+# Testing
+npm test            # Run unit tests
+npm run test:e2e    # Run E2E tests
+npm run ci          # Full validation suite
+
+# Code Quality
+npm run lint        # ESLint
+npm run format      # Prettier
+npm run typecheck   # TypeScript checking
 ```
 
 ## Repository Structure
@@ -79,15 +109,32 @@ npm run dev
 ```
 /
 ├── docs/                    # Documentation
-│   ├── plans/              # Execution plans
+│   ├── plans/              # Phase execution plans
 │   └── stinger_chrome_extension_design.md
-├── extension/              # Chrome extension source (to be created)
+├── extension/              # Chrome extension source
 │   ├── src/               # TypeScript source files
+│   │   ├── content/       # Content scripts
+│   │   ├── background/    # Service worker
+│   │   └── shared/        # Shared utilities
 │   ├── assets/            # Icons and static files
 │   └── manifest.json      # Chrome extension manifest
-├── tests/                  # Test suites (to be created)
-├── .github/               # GitHub Actions workflows (to be created)
+├── tests/                  # Test suites
+│   ├── unit/              # Jest unit tests
+│   └── e2e/               # Playwright tests
+├── dist/                   # Built extension (git-ignored)
 └── CLAUDE.md              # AI assistant guidance
+```
+
+## Testing the API
+
+Before using the extension, ensure the Stinger API is running:
+
+```bash
+# In the Stinger core repository
+python -m stinger.api
+
+# Test the connection (in this repo)
+node test-api.js
 ```
 
 ## Contributing
