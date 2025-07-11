@@ -15,6 +15,12 @@ dev: ## Start development server
 build: ## Build extension for production
 	npm run build
 
+build-watch: ## Build extension in watch mode
+	npm run build:watch
+
+ci: ## Run full CI pipeline (typecheck, lint, test, build)
+	npm run ci
+
 test: ## Run unit tests
 	npm test
 

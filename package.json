@@ -7,13 +7,17 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:watch": "vite build --watch",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
-    "lint": "eslint src --ext .ts,.tsx",
-    "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\"",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint extension/src --ext .ts,.tsx",
+    "format": "prettier --write \"extension/src/**/*.{ts,tsx,json,css}\"",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build",
+    "pretest": "npm run typecheck && npm run lint",
+    "ci": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "repository": {
     "type": "git",

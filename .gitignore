@@ -25,10 +25,12 @@ lerna-debug.log*
 
 # Build outputs
 dist/
+dist-zip/
 build/
 *.crx
 *.pem
 *.zip
+*.xpi
 
 # IDE
 .vscode/
