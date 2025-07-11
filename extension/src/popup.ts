@@ -1,5 +1,5 @@
 // Popup script
-console.log('Stinger Guard: Popup loaded');
+// Popup loaded - implementation coming in Phase 5
 
 // TODO: Add popup functionality
 // - Show current status

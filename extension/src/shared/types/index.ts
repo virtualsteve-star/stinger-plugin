@@ -1,6 +1,6 @@
 // Shared type definitions
 
-export interface Message {
-  type: string;
-  payload?: any;
-}
+// Re-export all types for convenient importing
+export * from './api';
+export * from './messages';
+export * from './storage';
