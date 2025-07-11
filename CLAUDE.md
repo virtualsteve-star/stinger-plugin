@@ -4,35 +4,52 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Stinger Guard is a Chrome Extension (Manifest V3) that monitors and enforces security guardrails for prompts and responses on web-based LLM interfaces like ChatGPT and Microsoft Copilot. This is currently a greenfield project in the planning phase with a comprehensive technical design document.
+Stinger Guard is a Chrome Extension (Manifest V3) that monitors and enforces security guardrails for prompts and responses on ChatGPT. This MVP implementation intercepts LLM traffic and routes it to the Stinger API for audit logging and policy enforcement.
+
+### Current Status
+- ✅ Phase 1 Complete: Project setup with TypeScript, Vite, Jest, and Chrome extension structure
+- 🚧 Phase 2 In Progress: Core infrastructure development
+- MVP Focus: ChatGPT only, basic allow/warn/block functionality
 
 ## Development Commands
 
-Since the project is not yet initialized, these commands will be available after setup:
-
 ```bash
-# Install dependencies
+# Install dependencies (auto-builds extension)
 npm install
 
-# Development build with watch mode
-npm run dev
+# Development
+npm run dev              # Start Vite dev server
+npm run build:watch      # Rebuild on file changes
 
-# Production build
-npm run build
+# Building
+npm run build           # Production build to dist/
 
-# Run unit tests
-npm run test
-npm run test:watch  # Watch mode
+# Testing
+npm run test            # Run Jest unit tests (with pre-checks)
+npm run test:watch      # Jest in watch mode
+npm run test:e2e        # Run Playwright E2E tests
 
-# Run E2E tests
-npm run test:e2e
+# Code Quality
+npm run lint            # ESLint on extension/src
+npm run format          # Prettier formatting
+npm run typecheck       # TypeScript type checking
 
-# Lint and typecheck
-npm run lint
-npm run typecheck
+# CI Pipeline
+npm run ci              # Full validation (typecheck, lint, test, build)
 
-# Package extension for Chrome
-npm run package  # Creates .crx file
+# Loading in Chrome
+1. Run `npm run build`
+2. Open chrome://extensions/
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select the `dist` directory
+```
+
+## Test the Stinger API Connection
+
+```bash
+# Ensure Stinger API is running on port 8888
+node test-api.js        # Test API endpoints
 ```
 
 ## Architecture Overview
@@ -59,25 +76,47 @@ The extension consists of three main components:
 ## Key Technical Decisions
 
 - **TypeScript 5** with ES2022 target
-- **Vite** for bundling (targeting Chrome 118+)
+- **Vite** with @crxjs/vite-plugin for Chrome extension bundling
 - **Chrome Extension Manifest V3** (service workers, not background pages)
+- **Jest** for unit testing with Chrome API mocks
+- **Playwright** for E2E testing
 - **Security-first design**: CSP hardening, isolated worlds, no eval
-- **Performance targets**: <250ms p95 for policy checks
+- **Performance targets**: <250ms p95 for policy checks (MVP: <500ms)
 
-## Project Structure (To Be Implemented)
+## Important Files and Locations
 
-```
-/extension/
-  manifest.json    # Chrome extension manifest
-  content.ts       # Content script for DOM interaction
-  bg.ts           # Background service worker
-  logger.ts       # Logging utilities
-  rpc.ts          # API communication with retries
-  hash.ts         # SHA-256 cryptographic utilities
-/tests/
-  unit/           # Jest unit tests
-  e2e/            # Playwright E2E tests
-```
+- `extension/` - Chrome extension source code
+  - `manifest.json` - Extension configuration
+  - `src/content/` - Content scripts (run on ChatGPT)
+  - `src/background/` - Service worker
+  - `src/shared/` - Shared types and utilities
+- `dist/` - Built extension (git-ignored, load this in Chrome)
+- `tests/` - Test files
+- `test-api.js` - Stinger API validation script
+- `.env` - Local environment configuration
+
+## Development Workflow
+
+1. **Starting Development**
+   ```bash
+   # Terminal 1: Start Stinger API (in stinger core repo)
+   # Terminal 2: Start build watcher
+   npm run build:watch
+   ```
+
+2. **Making Changes**
+   - Edit files in `extension/src/`
+   - Build automatically updates
+   - Reload extension in Chrome (or use Extensions Reloader extension)
+
+3. **Testing Changes**
+   - Unit tests: `npm test`
+   - Manual testing: Visit https://chat.openai.com
+   - Check console for "Stinger Guard:" messages
+
+4. **Before Committing**
+   - Run `npm run ci` to ensure all checks pass
+   - Test the built extension manually
 
 ## Security Considerations
 
