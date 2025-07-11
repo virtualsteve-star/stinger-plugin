@@ -9,20 +9,24 @@
 
 ## Executive Summary
 
-This execution plan outlines the development of the Stinger Guard Chrome Extension, which will integrate with the Stinger Policy API (provided by the Stinger core project) to deliver real-time security guardrails for LLM interactions. With the API handled by the core team, this plan focuses exclusively on the Chrome extension development over approximately 8-10 weeks.
+This execution plan outlines the development of the Stinger Guard Chrome Extension MVP (Minimum Viable Product), which will demonstrate the ability to intercept ChatGPT traffic and route it to the Stinger Policy API for audit logging. This proof of concept focuses on core functionality over 5 weeks, with future phases planned for enterprise features.
 
 ## Key Assumptions
 
-1. **Stinger API Availability**: The core team will provide:
-   - `POST /v1/check` endpoint
-   - `GET /v1/rules` endpoint
-   - HMAC-SHA256 signed responses
-   - Device certificate authentication support
-   - Comprehensive API documentation
+1. **Stinger API Availability**: ✅ **CONFIRMED** - API is live on port 8888 with:
+   - `POST /v1/check` endpoint - expects `{text: string, tenantId?, userId?, kind?, detached?}`
+   - `GET /v1/rules` endpoint - returns guardrail configuration and version
+   - `/health` endpoint - provides API status and pipeline availability
+   - Response format: `{action: "allow"|"warn"|"block", reasons: [], warnings: [], metadata: {}}`
+   - 2-second timeout fallback to "warn" mode recommended
 
-2. **API Timeline**: API available for integration by Week 3 of extension development
+2. **API Integration Details** (from testing):
+   - PII detection working for credit cards, SSNs
+   - Current preset: "customer_service"
+   - Detached mode available for async processing
+   - Simple guardrails active (toxicity/code checks may need AI features enabled)
 
-3. **Focus**: Pure Chrome extension client development
+3. **Focus**: Pure Chrome extension client development with defined API contract
 
 ---
 
@@ -387,40 +391,73 @@ This execution plan outlines the development of the Stinger Guard Chrome Extensi
 
 ---
 
-## Success Metrics
+## MVP Success Metrics
 
-### Performance KPIs
-- Check latency p95 < 250ms
-- Memory usage < 15MB
-- Zero perceived lag
-- Bundle size < 2MB
+### Core Functionality
+- 100% prompt/response capture rate on ChatGPT
+- Successfully sends all traffic to Stinger API
+- Basic allow/warn/block actions work correctly
+- Audit log entries created for all interactions
 
-### Quality KPIs
-- Zero critical bugs in production
-- 90%+ code coverage
-- All E2E tests passing
-- Performance budget met
+### Performance (MVP Targets)
+- Check latency < 500ms (relaxed for MVP)
+- No noticeable lag on ChatGPT
+- Memory usage < 50MB
+- Extension loads in < 2 seconds
 
-### User KPIs
-- 95% successful installations
-- <2% uninstall rate in first week
-- 4+ star average rating
-- <5% support ticket rate
+### Demo Readiness
+- Zero critical bugs in demo scenarios
+- Clear value proposition demonstrated
+- Stakeholder buy-in for full version
+- Path to production defined
 
 ---
 
 ## Timeline Summary
 
+### MVP Phase (5 weeks)
 ```
-Week 1: Project Setup
-Week 2-3: Content Script Development
-Week 3-4: UI Components & Response Monitoring
-Week 4-5: Background Worker & API Integration
-Week 5-6: Security & Enterprise Features
-Week 6-7: Testing & Optimization
-Week 7-8: CI/CD & Release Engineering
-Week 8-10: Documentation & Pilot Program
+Week 1: Phase 1 - Project Setup & Infrastructure
+Week 2: Phase 2 - Core Infrastructure & Architecture  
+Week 3: Phase 3 - Content Script Development (ChatGPT only)
+Week 4: Phase 4 - Background Worker & API Integration
+Week 5: Phase 5 - Testing & Demo Preparation
 ```
+
+### Future Phases (Post-MVP)
+```
+Phase 6: Multi-site Support (Copilot, Claude, etc.)
+Phase 7: Enterprise Features (Policy management, SIEM integration)
+Phase 8: Security Hardening & Performance
+Phase 9: Production Release & Deployment
+```
+
+## MVP Phase Plans
+
+Each phase has its own detailed implementation and testing plan:
+
+1. [Phase 1: Project Setup & Infrastructure](phase-1-setup.md)
+2. [Phase 2: Core Infrastructure & Architecture](phase-2-infrastructure.md)
+3. [Phase 3: Content Script Development](phase-3-content-script.md)
+4. [Phase 4: Background Worker & API Integration](phase-4-background-api.md)
+5. [Phase 5: Testing & Demo Preparation](phase-5-testing-demo.md)
+
+## MVP Scope
+
+### In Scope
+- ChatGPT prompt/response interception
+- Basic allow/warn/block functionality
+- Audit logging via Stinger API
+- Simple UI feedback
+- Proof of concept demonstration
+
+### Out of Scope (Future)
+- Multi-site support beyond ChatGPT
+- Advanced enterprise features
+- SIEM direct integration
+- Offline mode
+- Performance optimizations
+- Complex policy management
 
 ---
 
