@@ -31,12 +31,12 @@ npm run test:watch      # Jest in watch mode
 npm run test:e2e        # Run Playwright E2E tests
 
 # Code Quality
-npm run lint            # ESLint on extension/src (currently requires legacy config)
+npm run lint            # ESLint on extension/src
 npm run format          # Prettier formatting
 npm run typecheck       # TypeScript type checking
 
-# CI Pipeline (without linting due to ESLint v9 config issues)
-npm run typecheck && npm run test && npm run build
+# CI Pipeline
+npm run ci              # Full validation (typecheck, lint, test, build)
 
 # Loading in Chrome
 1. Run `npm run build`
