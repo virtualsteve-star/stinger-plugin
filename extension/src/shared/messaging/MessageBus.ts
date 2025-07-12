@@ -154,18 +154,18 @@ export class MessageBus {
       }
 
       // Execute all handlers, catching errors
-      const results = await Promise.allSettled(
-        handlers.map((handler) => handler(message, sender))
-      );
-      
+      const results = await Promise.allSettled(handlers.map((handler) => handler(message, sender)));
+
       // Get successful results
       const successfulResults = results
         .filter((r): r is PromiseFulfilledResult<MessageResponse> => r.status === 'fulfilled')
-        .map(r => r.value);
+        .map((r) => r.value);
 
       // Return the first successful result
       const successResult = successfulResults.find((r) => r.success);
-      sendResponse(successResult || successfulResults[0] || { success: false, error: 'All handlers failed' });
+      sendResponse(
+        successResult || successfulResults[0] || { success: false, error: 'All handlers failed' },
+      );
     } catch (error) {
       console.error('MessageBus error:', error);
       sendResponse({

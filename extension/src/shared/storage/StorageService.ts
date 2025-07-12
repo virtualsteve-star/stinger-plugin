@@ -114,8 +114,6 @@ export class StorageService implements IStorageService {
     });
   }
 
-
-
   /**
    * Cache operations
    */
@@ -200,12 +198,15 @@ export class StorageService implements IStorageService {
    */
   async initialize(): Promise<void> {
     try {
-      const result = await ChromeWrapper.storage.get<Record<string, any>>(['config', 'cache', 'lastSync']);
-      
+      const result = await ChromeWrapper.storage.get<Record<string, any>>([
+        'config',
+        'cache',
+        'lastSync',
+      ]);
+
       if (!result.config) {
         await this.set('config', DEFAULT_CONFIG);
       }
-
 
       if (!result.cache) {
         await this.set('cache', {});

@@ -4,14 +4,14 @@
 
 export class StingerOverlay {
   private overlayContainer: HTMLDivElement | null = null;
-  
+
   /**
    * Show a warning dialog
    */
   showWarning(warnings: string[]): Promise<boolean> {
     return new Promise((resolve) => {
       this.createOverlay();
-      
+
       const content = `
         <div style="
           background: white;
@@ -28,7 +28,7 @@ export class StingerOverlay {
           <div style="color: #1F2937; margin-bottom: 20px;">
             <p style="margin: 0 0 12px 0;">This prompt may violate security policies:</p>
             <ul style="margin: 0; padding-left: 20px;">
-              ${warnings.map(w => `<li style="margin: 4px 0;">${this.escapeHtml(w)}</li>`).join('')}
+              ${warnings.map((w) => `<li style="margin: 4px 0;">${this.escapeHtml(w)}</li>`).join('')}
             </ul>
           </div>
           
@@ -54,19 +54,19 @@ export class StingerOverlay {
           </div>
         </div>
       `;
-      
+
       if (this.overlayContainer) {
         this.overlayContainer.innerHTML = content;
-        
+
         // Add event listeners
         const cancelBtn = this.overlayContainer.querySelector('#stinger-cancel');
         const proceedBtn = this.overlayContainer.querySelector('#stinger-proceed');
-        
+
         cancelBtn?.addEventListener('click', () => {
           this.hideOverlay();
           resolve(false);
         });
-        
+
         proceedBtn?.addEventListener('click', () => {
           this.hideOverlay();
           resolve(true);
@@ -74,13 +74,13 @@ export class StingerOverlay {
       }
     });
   }
-  
+
   /**
    * Show a block message
    */
   showBlock(reasons: string[]): void {
     this.createOverlay();
-    
+
     const content = `
       <div style="
         background: white;
@@ -97,7 +97,7 @@ export class StingerOverlay {
         <div style="color: #1F2937; margin-bottom: 20px;">
           <p style="margin: 0 0 12px 0;">This prompt violates security policies:</p>
           <ul style="margin: 0; padding-left: 20px;">
-            ${reasons.map(r => `<li style="margin: 4px 0;">${this.escapeHtml(r)}</li>`).join('')}
+            ${reasons.map((r) => `<li style="margin: 4px 0;">${this.escapeHtml(r)}</li>`).join('')}
           </ul>
         </div>
         
@@ -114,23 +114,23 @@ export class StingerOverlay {
         </div>
       </div>
     `;
-    
+
     if (this.overlayContainer) {
       this.overlayContainer.innerHTML = content;
-      
+
       const okBtn = this.overlayContainer.querySelector('#stinger-ok');
       okBtn?.addEventListener('click', () => {
         this.hideOverlay();
       });
     }
   }
-  
+
   /**
    * Create the overlay container
    */
   private createOverlay(): void {
     if (this.overlayContainer) return;
-    
+
     this.overlayContainer = document.createElement('div');
     this.overlayContainer.id = 'stinger-overlay';
     this.overlayContainer.style.cssText = `
@@ -145,10 +145,10 @@ export class StingerOverlay {
       justify-content: center;
       z-index: 999999;
     `;
-    
+
     document.body.appendChild(this.overlayContainer);
   }
-  
+
   /**
    * Hide the overlay
    */
@@ -158,7 +158,7 @@ export class StingerOverlay {
       this.overlayContainer = null;
     }
   }
-  
+
   /**
    * Escape HTML for safe insertion
    */

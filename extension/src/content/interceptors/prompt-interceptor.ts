@@ -30,12 +30,12 @@ export class PromptInterceptor {
    */
   private getInputValue(element: HTMLTextAreaElement | HTMLElement | null): string {
     if (!element) return '';
-    
+
     // For textarea
     if ('value' in element) {
       return element.value;
     }
-    
+
     // For contenteditable
     return element.textContent || '';
   }
@@ -45,7 +45,7 @@ export class PromptInterceptor {
    */
   private setInputValue(element: HTMLTextAreaElement | HTMLElement | null, value: string): void {
     if (!element) return;
-    
+
     // For textarea
     if ('value' in element) {
       element.value = value;
@@ -60,13 +60,13 @@ export class PromptInterceptor {
    */
   start(): void {
     logger.info('Starting prompt interception');
-    
+
     // Set up initial interception
     this.setupInterception();
-    
+
     // Monitor for DOM changes (ChatGPT might recreate elements)
     this.monitorForElementChanges();
-    
+
     // Also monitor for input changes (submit button appears when typing)
     this.monitorForInputChanges();
   }
@@ -80,7 +80,6 @@ export class PromptInterceptor {
       this.submitButton.addEventListener('click', this.originalSubmitHandler);
     }
   }
-
 
   /**
    * Set up interception on current elements
@@ -97,7 +96,7 @@ export class PromptInterceptor {
 
     logger.debug('Found prompt input:', {
       selector: this.promptInput.name || this.promptInput.placeholder,
-      hasButton: !!this.submitButton
+      hasButton: !!this.submitButton,
     });
 
     // Always set up fresh monitoring when input changes
@@ -113,7 +112,7 @@ export class PromptInterceptor {
 
     // Intercept form submission
     this.interceptFormSubmission();
-    
+
     // Intercept button clicks if button found (including voice button that turns into submit)
     if (this.submitButton) {
       this.interceptButtonClick();
@@ -124,7 +123,7 @@ export class PromptInterceptor {
         logger.debug('Found voice button, will monitor for transformation');
       }
     }
-    
+
     // Intercept Enter key - this is the primary submission method
     this.interceptEnterKey();
   }
@@ -153,19 +152,23 @@ export class PromptInterceptor {
     }
 
     logger.debug('Adding click listener to submit button');
-    
+
     // Capture value on mouseover - before click!
-    this.submitButton!.addEventListener('mouseover', () => {
-      const input = getPromptInput();
-      const value = this.getInputValue(input);
-      if (input && value) {
-        this.lastKnownValue = value;
-      }
-    }, true);
-    
+    this.submitButton!.addEventListener(
+      'mouseover',
+      () => {
+        const input = getPromptInput();
+        const value = this.getInputValue(input);
+        if (input && value) {
+          this.lastKnownValue = value;
+        }
+      },
+      true,
+    );
+
     // Simple click listener - the value will be captured by mouseover
     this.submitButton.addEventListener('click', this.handleSubmitClick, true);
-    
+
     // Mark that we've added a listener (using WeakSet instead of DOM attribute)
     this.interceptedElements.add(this.submitButton);
   }
@@ -184,7 +187,7 @@ export class PromptInterceptor {
 
     logger.info('Adding keydown listener to prompt input');
     this.promptInput.addEventListener('keydown', this.handleKeyDown, true);
-    
+
     // Mark that we've added a listener (using WeakSet instead of DOM attribute)
     this.interceptedElements.add(this.promptInput);
   }
@@ -203,17 +206,17 @@ export class PromptInterceptor {
    */
   private handleSubmitClick = (e: Event): void => {
     logger.debug('Submit button clicked - intercepting');
-    
+
     // Only handle if not already prevented
     if (e.defaultPrevented) {
       return;
     }
-    
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Run the check
-    this.checkAndSubmitPrompt().catch(error => {
+    this.checkAndSubmitPrompt().catch((error) => {
       logger.error('Error in checkAndSubmitPrompt:', error);
     });
   };
@@ -224,9 +227,11 @@ export class PromptInterceptor {
   private handleKeyDown = async (e: KeyboardEvent): Promise<void> => {
     // Log all keydown events for debugging
     if (e.key === 'Enter') {
-      logger.info(`Enter key detected - Shift: ${e.shiftKey}, Target: ${(e.target as HTMLElement).tagName}`);
+      logger.info(
+        `Enter key detected - Shift: ${e.shiftKey}, Target: ${(e.target as HTMLElement).tagName}`,
+      );
     }
-    
+
     // Check if Enter was pressed without Shift (Shift+Enter adds newline)
     if (e.key === 'Enter' && !e.shiftKey) {
       logger.info('Enter key pressed - intercepting submission!');
@@ -253,21 +258,21 @@ export class PromptInterceptor {
 
     // Get fresh reference to ensure we have the right element
     const currentInput = getPromptInput();
-    
+
     // Try to get value
     let promptText = '';
     const inputToCheck = currentInput || this.promptInput;
-    
+
     if (inputToCheck) {
       // First try regular value
       promptText = this.getInputValue(inputToCheck).trim();
-      
+
       // If empty, try our last known value
       if (!promptText && this.lastKnownValue) {
         promptText = this.lastKnownValue.trim();
       }
     }
-    
+
     if (!promptText) {
       logger.debug('Empty prompt, ignoring');
       return;
@@ -278,7 +283,7 @@ export class PromptInterceptor {
 
     try {
       logger.info('Checking prompt:', promptText.substring(0, 50) + '...');
-      
+
       // Send prompt to background for checking
       const message: Omit<CheckPromptMessage, 'id' | 'timestamp'> = {
         type: 'CHECK_PROMPT',
@@ -304,7 +309,7 @@ export class PromptInterceptor {
           // Submit the prompt
           this.submitPrompt();
           break;
-          
+
         case 'warn':
           // Show warning but allow submission
           const proceed = await this.showWarning(result.warnings || []);
@@ -312,7 +317,7 @@ export class PromptInterceptor {
             this.submitPrompt();
           }
           break;
-          
+
         case 'block':
           // Block submission
           await this.showBlockMessage(result.reasons || []);
@@ -338,15 +343,15 @@ export class PromptInterceptor {
   private waitForCheckResult(): Promise<CheckResultMessage['payload']> {
     return new Promise((resolve) => {
       let unsubscribe: (() => void) | null = null;
-      
+
       const handler = (message: CheckResultMessage) => {
         resolve(message.payload);
         unsubscribe?.();
         return { success: true };
       };
-      
+
       unsubscribe = this.messageBus.on('CHECK_RESULT', handler);
-      
+
       // Timeout after 5 seconds
       setTimeout(() => {
         unsubscribe?.();
@@ -362,10 +367,10 @@ export class PromptInterceptor {
     if (!this.promptInput) return;
 
     logger.debug('Submitting prompt programmatically');
-    
+
     // Temporarily remove our Enter key handler to avoid recursion
     this.promptInput.removeEventListener('keydown', this.handleKeyDown, true);
-    
+
     // Simulate Enter key press (the most common way to submit)
     const enterEvent = new KeyboardEvent('keydown', {
       key: 'Enter',
@@ -376,10 +381,10 @@ export class PromptInterceptor {
       cancelable: true,
       view: window,
     });
-    
+
     // Dispatch the event
     this.promptInput.dispatchEvent(enterEvent);
-    
+
     // For some React apps, we might need to trigger keypress too
     const keypressEvent = new KeyboardEvent('keypress', {
       key: 'Enter',
@@ -391,7 +396,7 @@ export class PromptInterceptor {
       view: window,
     });
     this.promptInput.dispatchEvent(keypressEvent);
-    
+
     // Re-add our handler after a short delay
     setTimeout(() => {
       if (this.promptInput) {
@@ -439,44 +444,44 @@ export class PromptInterceptor {
     const observer = new MutationObserver(() => {
       const currentInput = getPromptInput();
       const currentButton = getSubmitButton();
-      
+
       if (currentInput !== this.promptInput || currentButton !== this.submitButton) {
         logger.debug('Elements changed, re-setting up interception');
         this.setupInterception();
       }
     });
-    
+
     // Observe the main content area
     const mainContent = document.querySelector('main') || document.body;
     observer.observe(mainContent, {
       childList: true,
       subtree: true,
-      attributes: false
+      attributes: false,
     });
-    
+
     // Also check periodically as backup
     setInterval(() => {
       const currentInput = getPromptInput();
       const currentButton = getSubmitButton();
-      
+
       if (currentInput !== this.promptInput || currentButton !== this.submitButton) {
         logger.debug('Elements changed (interval check), re-setting up interception');
         this.setupInterception();
       }
     }, 2000);
   }
-  
+
   /**
    * Set up input monitoring to track value changes
    */
   private setupInputMonitoring(): void {
     if (!this.promptInput) return;
-    
+
     // Don't set up monitoring twice for the same element
     if (this.interceptedElements.has(this.promptInput)) {
       return;
     }
-    
+
     // Simple approach - just capture on input event
     const captureValue = (e: Event) => {
       const target = e.target as HTMLTextAreaElement | HTMLElement;
@@ -485,21 +490,20 @@ export class PromptInterceptor {
         this.lastKnownValue = value;
       }
     };
-    
+
     // Only monitor input event - that's sufficient
     this.promptInput.addEventListener('input', captureValue, true);
-    
+
     // Mark this input as monitored
     this.interceptedElements.add(this.promptInput);
   }
-  
-  
+
   /**
    * Monitor for input changes to detect when submit button appears
    */
   private monitorForInputChanges(): void {
     if (!this.promptInput) return;
-    
+
     // Check if we need to re-setup button interception
     this.promptInput.addEventListener('input', () => {
       if (!this.submitButton || !this.interceptedElements.has(this.submitButton)) {

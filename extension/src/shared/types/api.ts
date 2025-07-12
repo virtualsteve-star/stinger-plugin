@@ -9,17 +9,17 @@ export interface ConversationContext {
   // Required for tracking
   userId: string;
   botId: string;
-  
+
   // Participant types (default to human <-> ai_model)
   userType?: ParticipantType;
   botType?: ParticipantType;
-  
+
   // Optional but recommended
   userName?: string;
   botName?: string;
   botModel?: string;
   sessionId?: string;
-  
+
   // Additional context
   browser?: string;
   extensionVersion?: string;

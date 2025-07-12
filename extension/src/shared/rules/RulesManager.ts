@@ -11,21 +11,21 @@ const logger = loggers.background;
 
 export class RulesManager {
   private readonly SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
-  
+
   /**
    * Start automatic rule synchronization
    */
   startSync(): void {
     logger.info('Starting rules synchronization');
-    
+
     // Initial sync
     this.syncRules();
-    
+
     // Set up periodic sync using Chrome alarms API (service workers don't have setInterval)
     // this.syncInterval = setInterval(() => {
     //   this.syncRules();
     // }, this.SYNC_INTERVAL);
-    
+
     // Also sync on alarm (Chrome's preferred method for background tasks)
     chrome.alarms.create('sync-rules', { periodInMinutes: 5 });
     chrome.alarms.onAlarm.addListener((alarm) => {
@@ -34,7 +34,7 @@ export class RulesManager {
       }
     });
   }
-  
+
   /**
    * Stop automatic synchronization
    */
@@ -42,40 +42,39 @@ export class RulesManager {
     chrome.alarms.clear('sync-rules');
     logger.info('Stopped rules synchronization');
   }
-  
+
   /**
    * Sync rules from API
    */
   async syncRules(): Promise<void> {
     try {
       logger.debug('Syncing rules from API');
-      
+
       const result = await stingerClient.getRules();
-      
+
       if (result.success) {
         const rules: PolicyRules = {
           version: result.data.version,
           preset: result.data.preset,
           guardrails: result.data.guardrails,
-          lastUpdated: Date.now()
+          lastUpdated: Date.now(),
         };
-        
+
         // Check if rules have changed
         const currentRules = await storageService.getRules();
         if (currentRules?.version !== rules.version) {
-          logger.info('Rules updated', { 
-            oldVersion: currentRules?.version, 
-            newVersion: rules.version 
+          logger.info('Rules updated', {
+            oldVersion: currentRules?.version,
+            newVersion: rules.version,
           });
-          
+
           await storageService.updateRules(rules);
-          
+
           // Notify content scripts of rule update
           this.notifyRuleUpdate(rules);
         } else {
           logger.debug('Rules unchanged');
         }
-        
       } else {
         logger.error('Failed to sync rules', result.error);
       }
@@ -83,23 +82,23 @@ export class RulesManager {
       logger.error('Error syncing rules', error);
     }
   }
-  
+
   /**
    * Get current rules (from storage or API)
    */
   async getRules(): Promise<PolicyRules | null> {
     // Try to get from storage first
     const storedRules = await storageService.getRules();
-    
+
     if (storedRules && this.isRulesFresh(storedRules)) {
       return storedRules;
     }
-    
+
     // Otherwise sync from API
     await this.syncRules();
-    return await storageService.getRules() || null;
+    return (await storageService.getRules()) || null;
   }
-  
+
   /**
    * Check if rules are still fresh
    */
@@ -107,15 +106,15 @@ export class RulesManager {
     const age = Date.now() - rules.lastUpdated;
     return age < this.SYNC_INTERVAL;
   }
-  
+
   /**
    * Notify all tabs about rule updates
    */
   private async notifyRuleUpdate(rules: PolicyRules): Promise<void> {
-    const tabs = await chrome.tabs.query({ 
-      url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'] 
+    const tabs = await chrome.tabs.query({
+      url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'],
     });
-    
+
     for (const tab of tabs) {
       if (tab.id) {
         try {
@@ -123,8 +122,8 @@ export class RulesManager {
             type: 'RULES_UPDATED',
             payload: {
               version: rules.version,
-              preset: rules.preset
-            }
+              preset: rules.preset,
+            },
           });
         } catch (error) {
           // Tab might not have content script loaded
@@ -133,7 +132,7 @@ export class RulesManager {
       }
     }
   }
-  
+
   /**
    * Force immediate rule sync
    */

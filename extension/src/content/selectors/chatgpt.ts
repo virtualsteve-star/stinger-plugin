@@ -1,6 +1,6 @@
 /**
  * DOM Selectors for ChatGPT Interface
- * 
+ *
  * Note: These selectors are based on ChatGPT's current UI structure
  * and may need updates if OpenAI changes their interface
  */
@@ -8,16 +8,16 @@
 export const ChatGPTSelectors = {
   // Main chat input
   promptInput: 'textarea[name="prompt-textarea"]',
-  
+
   // Alternative selectors for input (ChatGPT sometimes changes these)
   alternativeInputs: [
     'textarea[placeholder*="Ask anything"]',
     'textarea[placeholder*="Send a message"]',
     'textarea[placeholder*="Message"]',
     '#prompt-textarea',
-    '[contenteditable="true"]'
+    '[contenteditable="true"]',
   ],
-  
+
   // Submit button (appears when textarea has content)
   submitButton: 'button[data-testid="send-button"]',
   alternativeSubmitButtons: [
@@ -29,40 +29,37 @@ export const ChatGPTSelectors = {
     // Button that contains the send icon path
     'button:has(path[d*="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8"])',
   ],
-  
+
   // Message containers
   messageList: 'div[class*="flex flex-col"]',
-  
+
   // Individual messages
   userMessage: '[data-message-author-role="user"]',
   assistantMessage: '[data-message-author-role="assistant"]',
-  
+
   // Alternative message selectors
   alternativeMessages: {
     user: 'div.group.w-full[class*="dark:bg-gray-800"]',
     assistant: 'div.group.w-full[class*="bg-gray-50"]',
   },
-  
+
   // Message content
   messageContent: '.markdown.prose',
-  alternativeMessageContent: [
-    'div[class*="markdown"]',
-    'div.text-base',
-  ],
-  
+  alternativeMessageContent: ['div[class*="markdown"]', 'div.text-base'],
+
   // Streaming indicator
   streamingIndicator: '.result-streaming',
   cursorBlink: '.cursor-blink',
-  
+
   // Stop generation button (appears during streaming)
   stopButton: 'button:has(svg[class*="stop"])',
-  
+
   // Error messages
   errorContainer: 'div[class*="error"]',
-  
+
   // Model selector (GPT-4, GPT-3.5, etc.)
   modelSelector: 'button[aria-haspopup="menu"]',
-  
+
   // Regenerate button
   regenerateButton: 'button:has(svg[class*="refresh"])',
 } as const;
@@ -73,12 +70,12 @@ export const ChatGPTSelectors = {
 export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
   // Try primary selector first
   let input = document.querySelector<HTMLTextAreaElement>(ChatGPTSelectors.promptInput);
-  
+
   // Skip if it's hidden
   if (input && (input.style.display === 'none' || input.offsetParent === null)) {
     input = null;
   }
-  
+
   if (!input) {
     // Try alternative selectors
     for (const selector of ChatGPTSelectors.alternativeInputs) {
@@ -90,7 +87,7 @@ export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
       }
     }
   }
-  
+
   // If still not found, try contenteditable (which is what ChatGPT actually uses!)
   if (!input) {
     const contentEditable = document.querySelector('[contenteditable="true"]');
@@ -98,7 +95,7 @@ export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
       return contentEditable as HTMLElement;
     }
   }
-  
+
   // If still not found, try more generic approach
   if (!input) {
     const textareas = document.querySelectorAll('textarea');
@@ -111,7 +108,7 @@ export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
       }
     }
   }
-  
+
   return input;
 }
 
@@ -120,18 +117,20 @@ export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
  */
 export function getSubmitButton(): HTMLButtonElement | null {
   let button = document.querySelector<HTMLButtonElement>(ChatGPTSelectors.submitButton);
-  
+
   if (!button) {
     for (const selector of ChatGPTSelectors.alternativeSubmitButtons) {
       button = document.querySelector<HTMLButtonElement>(selector);
       if (button) break;
     }
   }
-  
+
   // If still not found, try to find the send button that appears when typing
   if (!button) {
     // Look for buttons that might be the send button (usually has specific styling)
-    const possibleButtons = document.querySelectorAll('button[aria-label]:not([aria-label*="Add"]):not([aria-label*="Choose"]):not([aria-label*="voice"]):not([aria-label*="Dictate"])');
+    const possibleButtons = document.querySelectorAll(
+      'button[aria-label]:not([aria-label*="Add"]):not([aria-label*="Choose"]):not([aria-label*="voice"]):not([aria-label*="Dictate"])',
+    );
     for (const btn of possibleButtons) {
       const ariaLabel = btn.getAttribute('aria-label') || '';
       if (ariaLabel.toLowerCase().includes('send')) {
@@ -140,42 +139,43 @@ export function getSubmitButton(): HTMLButtonElement | null {
       }
     }
   }
-  
+
   return button;
 }
 
 /**
  * Get all messages in the conversation
  */
-export function getAllMessages(): { role: 'user' | 'assistant', content: string }[] {
-  const messages: { role: 'user' | 'assistant', content: string }[] = [];
-  
+export function getAllMessages(): { role: 'user' | 'assistant'; content: string }[] {
+  const messages: { role: 'user' | 'assistant'; content: string }[] = [];
+
   // Try primary selectors
   const userMessages = document.querySelectorAll(ChatGPTSelectors.userMessage);
   const assistantMessages = document.querySelectorAll(ChatGPTSelectors.assistantMessage);
-  
+
   if (userMessages.length === 0 && assistantMessages.length === 0) {
     // Try alternative selectors
     // This is more complex as we need to determine role by styling
     console.warn('Using alternative message selectors');
   }
-  
+
   // Combine and sort by position
   const allElements = [...Array.from(userMessages), ...Array.from(assistantMessages)];
-  
-  allElements.forEach(el => {
+
+  allElements.forEach((el) => {
     const role = el.getAttribute('data-message-author-role') as 'user' | 'assistant';
-    const contentEl = el.querySelector(ChatGPTSelectors.messageContent) || 
-                     el.querySelector(ChatGPTSelectors.alternativeMessageContent[0]);
-    
+    const contentEl =
+      el.querySelector(ChatGPTSelectors.messageContent) ||
+      el.querySelector(ChatGPTSelectors.alternativeMessageContent[0]);
+
     if (contentEl) {
       messages.push({
         role,
-        content: contentEl.textContent || ''
+        content: contentEl.textContent || '',
       });
     }
   });
-  
+
   return messages;
 }
 
@@ -196,9 +196,9 @@ export function isGenerating(): boolean {
 export function getLatestAssistantMessage(): string | null {
   const messages = document.querySelectorAll(ChatGPTSelectors.assistantMessage);
   const latestMessage = messages[messages.length - 1];
-  
+
   if (!latestMessage) return null;
-  
+
   const contentEl = latestMessage.querySelector(ChatGPTSelectors.messageContent);
   return contentEl?.textContent || null;
 }

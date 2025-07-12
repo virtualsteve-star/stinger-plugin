@@ -52,7 +52,7 @@ async function initializeStingerGuard() {
 // Set up prompt interception
 function setupPromptInterception() {
   logger.debug('Setting up prompt interception...');
-  
+
   promptInterceptor = new PromptInterceptor(messageBus);
   promptInterceptor.start();
 }
@@ -60,20 +60,20 @@ function setupPromptInterception() {
 // Set up response monitoring
 function setupResponseMonitoring() {
   logger.debug('Setting up response monitoring...');
-  
+
   responseMonitor = new ResponseMonitor(messageBus);
 }
 
 // Set up DOM observation
 function setupDOMObservation() {
   logger.debug('Setting up DOM observation...');
-  
+
   domObserver = new ChatGPTDOMObserver({
     onNewUserMessage: (_text) => {
       logger.debug('New user message detected via DOM observation');
       // The prompt interceptor handles checking before submission
     },
-    
+
     onNewAssistantMessage: (text) => {
       logger.debug('New assistant message detected');
       if (responseMonitor) {
@@ -81,34 +81,34 @@ function setupDOMObservation() {
         responseMonitor.checkResponse(text);
       }
     },
-    
+
     onAssistantMessageUpdate: (text) => {
       logger.debug('Assistant message updated');
       if (responseMonitor) {
         responseMonitor.checkResponse(text);
       }
     },
-    
+
     onGenerationStart: () => {
       logger.debug('Response generation started');
     },
-    
+
     onGenerationEnd: () => {
       logger.debug('Response generation ended');
     },
   });
-  
+
   domObserver.start();
 }
 
 // Clean up on unload
 window.addEventListener('unload', () => {
   logger.info('Content script unloading, cleaning up...');
-  
+
   if (domObserver) {
     domObserver.stop();
   }
-  
+
   if (promptInterceptor) {
     promptInterceptor.stop();
   }
@@ -118,7 +118,7 @@ window.addEventListener('unload', () => {
 logger.info('Content script loaded', {
   url: window.location.href,
   readyState: document.readyState,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 
 // Wait for DOM to be ready

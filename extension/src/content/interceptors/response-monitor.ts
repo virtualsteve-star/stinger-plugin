@@ -81,7 +81,7 @@ export class ResponseMonitor {
 
     try {
       logger.info('Checking response:', text.substring(0, 50) + '...');
-      
+
       // Send response to background for checking
       const message: Omit<CheckResponseMessage, 'id' | 'timestamp'> = {
         type: 'CHECK_RESPONSE',
@@ -107,12 +107,12 @@ export class ResponseMonitor {
         case 'allow':
           // Response is fine, do nothing
           break;
-          
+
         case 'warn':
           // Show warning overlay on the response
           this.showResponseWarning(result.warnings || []);
           break;
-          
+
         case 'block':
           // Hide or redact the response
           this.blockResponse(result.reasons || []);
@@ -133,15 +133,15 @@ export class ResponseMonitor {
   private waitForCheckResult(): Promise<CheckResultMessage['payload']> {
     return new Promise((resolve) => {
       let unsubscribe: (() => void) | null = null;
-      
+
       const handler = (message: CheckResultMessage) => {
         resolve(message.payload);
         unsubscribe?.();
         return { success: true };
       };
-      
+
       unsubscribe = this.messageBus.on('CHECK_RESULT', handler);
-      
+
       // Timeout after 5 seconds
       setTimeout(() => {
         unsubscribe?.();
@@ -157,7 +157,7 @@ export class ResponseMonitor {
     // Find the latest assistant message element
     const assistantMessages = document.querySelectorAll('[data-message-author-role="assistant"]');
     const latestMessage = assistantMessages[assistantMessages.length - 1];
-    
+
     if (!latestMessage) return;
 
     // Check if warning already exists
@@ -178,7 +178,7 @@ export class ResponseMonitor {
     warningEl.innerHTML = `
       <strong>⚠️ Stinger Warning:</strong>
       <ul style="margin: 4px 0 0 20px; padding: 0;">
-        ${warnings.map(w => `<li>${this.escapeHtml(w)}</li>`).join('')}
+        ${warnings.map((w) => `<li>${this.escapeHtml(w)}</li>`).join('')}
       </ul>
     `;
 
@@ -193,13 +193,14 @@ export class ResponseMonitor {
     // Find the latest assistant message element
     const assistantMessages = document.querySelectorAll('[data-message-author-role="assistant"]');
     const latestMessage = assistantMessages[assistantMessages.length - 1];
-    
+
     if (!latestMessage) return;
 
     // Find the content element
-    const contentEl = latestMessage.querySelector('.markdown.prose') || 
-                     latestMessage.querySelector('div[class*="markdown"]');
-    
+    const contentEl =
+      latestMessage.querySelector('.markdown.prose') ||
+      latestMessage.querySelector('div[class*="markdown"]');
+
     if (!contentEl) return;
 
     // Replace content with blocked message
@@ -214,7 +215,7 @@ export class ResponseMonitor {
         <strong>🚫 Response Blocked by Stinger</strong>
         <p style="margin: 8px 0 0 0;">This response contains content that violates security policies:</p>
         <ul style="margin: 4px 0 0 20px;">
-          ${reasons.map(r => `<li>${this.escapeHtml(r)}</li>`).join('')}
+          ${reasons.map((r) => `<li>${this.escapeHtml(r)}</li>`).join('')}
         </ul>
       </div>
     `;

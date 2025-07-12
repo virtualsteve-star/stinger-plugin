@@ -15,51 +15,51 @@ function generateSessionId(): string {
 /**
  * Detect the current AI system based on the URL
  */
-export function detectAISystem(url: string): { 
-  id: string; 
-  name: string; 
+export function detectAISystem(url: string): {
+  id: string;
+  name: string;
   model?: string;
   type: ParticipantType;
 } {
   const hostname = new URL(url).hostname;
-  
+
   // Standard AI models
   if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
     return {
       id: 'chatgpt',
       name: 'ChatGPT',
       model: detectChatGPTModel(),
-      type: 'ai_model'
+      type: 'ai_model',
     };
   }
-  
+
   // AI agents
   if (hostname.includes('autogpt.') || hostname.includes('agent.')) {
     return {
       id: 'autogpt',
       name: 'AutoGPT Agent',
-      type: 'agent'
+      type: 'agent',
     };
   }
-  
+
   // Customer service bots
   if (hostname.includes('support.') || hostname.includes('help.')) {
     return {
       id: 'support-bot',
       name: 'Support Bot',
-      type: 'bot'
+      type: 'bot',
     };
   }
-  
+
   // Future: Add detection for other AI systems
   // if (hostname.includes('claude.ai')) {
   //   return { id: 'claude', name: 'Claude', type: 'ai_model' };
   // }
-  
+
   return {
     id: 'unknown',
     name: 'Unknown AI',
-    type: 'ai_model' // Default to ai_model
+    type: 'ai_model', // Default to ai_model
   };
 }
 
@@ -71,7 +71,7 @@ function detectChatGPTModel(): string {
   if (typeof document === 'undefined') {
     return 'gpt-4'; // Default for background context
   }
-  
+
   // Look for model selector button
   const modelButton = document.querySelector('button[aria-haspopup="menu"]');
   if (modelButton) {
@@ -79,7 +79,7 @@ function detectChatGPTModel(): string {
     if (text.includes('GPT-4')) return 'gpt-4';
     if (text.includes('GPT-3.5')) return 'gpt-3.5-turbo';
   }
-  
+
   // Default to GPT-4 if we can't detect
   return 'gpt-4';
 }
@@ -92,25 +92,29 @@ function detectUserType(url?: string): ParticipantType {
   if (typeof window === 'undefined') {
     return 'human'; // Default for background context
   }
-  
+
   // Check for automation indicators
   if (window.location.search.includes('automated=true')) {
     return 'bot';
   }
-  
+
   // Check for automation banners or indicators in the DOM
-  if (document.querySelector('[data-testid="automation-banner"]') ||
-      document.querySelector('.automation-indicator') ||
-      document.querySelector('[data-automated="true"]')) {
+  if (
+    document.querySelector('[data-testid="automation-banner"]') ||
+    document.querySelector('.automation-indicator') ||
+    document.querySelector('[data-automated="true"]')
+  ) {
     return 'bot';
   }
-  
+
   // Check for agent indicators
-  if (window.location.search.includes('agent=true') ||
-      document.querySelector('[data-agent="true"]')) {
+  if (
+    window.location.search.includes('agent=true') ||
+    document.querySelector('[data-agent="true"]')
+  ) {
     return 'agent';
   }
-  
+
   // Default to human
   return 'human';
 }
@@ -118,23 +122,23 @@ function detectUserType(url?: string): ParticipantType {
 /**
  * Get or create user identification
  */
-export async function getUserIdentification(url?: string): Promise<{ 
-  userId: string; 
+export async function getUserIdentification(url?: string): Promise<{
+  userId: string;
   userName?: string;
   userType: ParticipantType;
 }> {
   const config = await storageService.getConfig();
   const userType = detectUserType(url);
-  
+
   // Check if user has configured their identity
   if (config.userId) {
     return {
       userId: config.userId,
       userName: config.userName,
-      userType
+      userType,
     };
   }
-  
+
   // Try to get from Chrome identity API if available
   if (chrome.identity && chrome.identity.getProfileUserInfo) {
     return new Promise((resolve) => {
@@ -143,7 +147,7 @@ export async function getUserIdentification(url?: string): Promise<{
           resolve({
             userId: userInfo.email,
             userName: userInfo.email.split('@')[0],
-            userType
+            userType,
           });
         } else {
           // Generate anonymous ID
@@ -153,7 +157,7 @@ export async function getUserIdentification(url?: string): Promise<{
       });
     });
   }
-  
+
   // Fallback to anonymous ID
   const anonymousId = `anonymous-${generateSessionId()}`;
   return { userId: anonymousId, userType };
@@ -165,11 +169,11 @@ export async function getUserIdentification(url?: string): Promise<{
 export async function buildConversationContext(url: string): Promise<ConversationContext> {
   const [userInfo, aiSystem] = await Promise.all([
     getUserIdentification(url),
-    Promise.resolve(detectAISystem(url))
+    Promise.resolve(detectAISystem(url)),
   ]);
-  
+
   const manifest = chrome.runtime.getManifest();
-  
+
   // Get browser info (navigator should be available in service workers)
   let browser = 'Unknown';
   if (typeof navigator !== 'undefined' && navigator.userAgent) {
@@ -179,26 +183,26 @@ export async function buildConversationContext(url: string): Promise<Conversatio
     else if (userAgent.includes('Safari')) browser = 'Safari';
     else if (userAgent.includes('Edge')) browser = 'Edge';
   }
-  
+
   return {
     // Required
     userId: userInfo.userId,
     botId: aiSystem.id,
-    
+
     // Participant types
     userType: userInfo.userType,
     botType: aiSystem.type,
-    
+
     // Optional but recommended
     userName: userInfo.userName,
     botName: aiSystem.name,
     botModel: aiSystem.model,
     sessionId: await getOrCreateSessionId(),
-    
+
     // Additional context
     browser,
     extensionVersion: manifest.version,
-    url: new URL(url).hostname
+    url: new URL(url).hostname,
   };
 }
 

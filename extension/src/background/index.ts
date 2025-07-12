@@ -44,7 +44,7 @@ async function initialize() {
 
     // Start rules synchronization
     rulesManager.startSync();
-    
+
     // Load initial rules
     const rules = await rulesManager.getRules();
     if (rules) {
@@ -82,11 +82,11 @@ messageBus.on<CheckPromptMessage>('CHECK_PROMPT', async (message, sender) => {
 
   try {
     const config = await storageService.getConfig();
-    
+
     // Build conversation context from the tab URL
     const tabUrl = sender.tab?.url || 'unknown';
     const context = await buildConversationContext(tabUrl);
-    
+
     const result = await stingerClient.checkContent({
       text: message.payload.text,
       kind: 'prompt',
@@ -103,7 +103,7 @@ messageBus.on<CheckPromptMessage>('CHECK_PROMPT', async (message, sender) => {
         userId: context.userId,
         botId: context.botId,
       });
-      
+
       // Send result back to content script
       const response: CheckResultMessage = {
         id: `result-${Date.now()}`,
@@ -141,11 +141,11 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
 
   try {
     const config = await storageService.getConfig();
-    
+
     // Build conversation context from the tab URL
     const tabUrl = sender.tab?.url || 'unknown';
     const context = await buildConversationContext(tabUrl);
-    
+
     const result = await stingerClient.checkContent({
       text: message.payload.text,
       kind: 'response',
@@ -162,7 +162,7 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
         userId: context.userId,
         botId: context.botId,
       });
-      
+
       // Send result back to content script
       const response: CheckResultMessage = {
         id: `result-${Date.now()}`,
@@ -190,7 +190,6 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
     return { success: false, error: 'Internal error' };
   }
 });
-
 
 // Handle extension installation/update
 chrome.runtime.onInstalled.addListener(
