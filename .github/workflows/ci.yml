@@ -30,6 +30,7 @@ jobs:
     - name: Check Stinger API compatibility
       run: |
         curl -f https://api.stinger.dev/health || echo "Stinger API health check failed (non-blocking)"
+      continue-on-error: true
     
     - name: Run type checking
       run: npm run typecheck
