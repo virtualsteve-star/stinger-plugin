@@ -87,7 +87,7 @@ function detectChatGPTModel(): string {
 /**
  * Detect if the current user is automated (bot/agent)
  */
-function detectUserType(url?: string): ParticipantType {
+function detectUserType(_url?: string): ParticipantType {
   // In service worker context, we can't access window/document
   if (typeof window === 'undefined') {
     return 'human'; // Default for background context
@@ -176,8 +176,8 @@ export async function buildConversationContext(url: string): Promise<Conversatio
 
   // Get browser info (navigator should be available in service workers)
   let browser = 'Unknown';
-  if (typeof navigator !== 'undefined' && navigator.userAgent) {
-    const userAgent = navigator.userAgent;
+  if (typeof globalThis.navigator !== 'undefined' && globalThis.navigator.userAgent) {
+    const userAgent = globalThis.navigator.userAgent;
     if (userAgent.includes('Chrome')) browser = 'Chrome';
     else if (userAgent.includes('Firefox')) browser = 'Firefox';
     else if (userAgent.includes('Safari')) browser = 'Safari';

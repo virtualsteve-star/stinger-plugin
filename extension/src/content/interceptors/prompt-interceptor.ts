@@ -95,7 +95,8 @@ export class PromptInterceptor {
     }
 
     logger.debug('Found prompt input:', {
-      selector: this.promptInput.name || this.promptInput.placeholder,
+      selector:
+        (this.promptInput as any).name || (this.promptInput as any).placeholder || 'unknown',
       hasButton: !!this.submitButton,
     });
 
@@ -224,16 +225,17 @@ export class PromptInterceptor {
   /**
    * Handle keydown events
    */
-  private handleKeyDown = async (e: KeyboardEvent): Promise<void> => {
+  private handleKeyDown = async (e: Event): Promise<void> => {
+    const keyEvent = e as KeyboardEvent;
     // Log all keydown events for debugging
-    if (e.key === 'Enter') {
+    if (keyEvent.key === 'Enter') {
       logger.info(
-        `Enter key detected - Shift: ${e.shiftKey}, Target: ${(e.target as HTMLElement).tagName}`,
+        `Enter key detected - Shift: ${keyEvent.shiftKey}, Target: ${(keyEvent.target as HTMLElement).tagName}`,
       );
     }
 
     // Check if Enter was pressed without Shift (Shift+Enter adds newline)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
       logger.info('Enter key pressed - intercepting submission!');
       e.preventDefault();
       e.stopPropagation();
@@ -310,13 +312,14 @@ export class PromptInterceptor {
           this.submitPrompt();
           break;
 
-        case 'warn':
+        case 'warn': {
           // Show warning but allow submission
           const proceed = await this.showWarning(result.warnings || []);
           if (proceed) {
             this.submitPrompt();
           }
           break;
+        }
 
         case 'block':
           // Block submission
@@ -460,7 +463,7 @@ export class PromptInterceptor {
     });
 
     // Also check periodically as backup
-    setInterval(() => {
+    window.setInterval(() => {
       const currentInput = getPromptInput();
       const currentButton = getSubmitButton();
 

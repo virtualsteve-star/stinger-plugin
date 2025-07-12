@@ -93,7 +93,7 @@ async function saveConfig() {
 
     // Test the new configuration
     await checkApiStatus();
-  } catch (error) {
+  } catch {
     updateStatus('Failed to save configuration', 'error');
   }
 }
@@ -113,7 +113,7 @@ async function testApiConnection() {
     } else {
       updateStatus(`API error: ${result.error.message}`, 'error');
     }
-  } catch (error) {
+  } catch {
     updateStatus('Failed to connect to API', 'error');
   } finally {
     testButton.disabled = false;

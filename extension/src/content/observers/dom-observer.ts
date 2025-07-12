@@ -153,7 +153,7 @@ export class ChatGPTDOMObserver {
    * Monitor for generation start/end
    */
   private startGenerationMonitoring(): void {
-    setInterval(() => {
+    window.setInterval(() => {
       const currentlyGenerating = isGenerating();
 
       if (currentlyGenerating && !this.isCurrentlyGenerating) {

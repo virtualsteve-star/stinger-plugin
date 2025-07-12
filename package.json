@@ -33,7 +33,7 @@
     "stinger"
   ],
   "author": "Stinger Team",
-  "license": "PROPRIETARY",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/virtualsteve-star/stinger-plugin/issues"
   },
