@@ -25,7 +25,10 @@
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published
+- [ ] Tested against Stinger API v0.1.0a3
+- [ ] Updated TypeScript types if API interaction changed
+- [ ] Verified in Chrome, Firefox, Edge (if UI changes)
+- [ ] Run `npm run ci:local` successfully
 
 ## Screenshots (if applicable)
 <!-- Add screenshots to help explain your changes -->
