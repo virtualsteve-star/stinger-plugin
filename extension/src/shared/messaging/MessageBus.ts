@@ -153,12 +153,19 @@ export class MessageBus {
         return;
       }
 
-      // Execute all handlers
-      const results = await Promise.all(handlers.map((handler) => handler(message, sender)));
+      // Execute all handlers, catching errors
+      const results = await Promise.allSettled(
+        handlers.map((handler) => handler(message, sender))
+      );
+      
+      // Get successful results
+      const successfulResults = results
+        .filter((r): r is PromiseFulfilledResult<MessageResponse> => r.status === 'fulfilled')
+        .map(r => r.value);
 
       // Return the first successful result
-      const successResult = results.find((r) => r.success);
-      sendResponse(successResult || results[0]);
+      const successResult = successfulResults.find((r) => r.success);
+      sendResponse(successResult || successfulResults[0] || { success: false, error: 'All handlers failed' });
     } catch (error) {
       console.error('MessageBus error:', error);
       sendResponse({

@@ -10,6 +10,42 @@
   },
 };
 
+// Add fetch API polyfills for jsdom
+import 'whatwg-fetch';
+global.Response = Response;
+global.Request = Request;
+global.Headers = Headers;
+
+// Mock AbortController if not available
+if (!global.AbortController) {
+  global.AbortController = class AbortController {
+    signal = {
+      aborted: false,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    };
+    abort() {
+      this.signal.aborted = true;
+      // Trigger abort event for any listeners
+      this.signal.addEventListener.mock.calls.forEach(([type, handler]) => {
+        if (type === 'abort') {
+          handler();
+        }
+      });
+    }
+  } as any;
+}
+
+// Mock crypto API
+if (!global.crypto) {
+  global.crypto = {} as any;
+}
+if (!global.crypto.subtle) {
+  global.crypto.subtle = {
+    digest: jest.fn().mockResolvedValue(new ArrayBuffer(32)),
+  } as any;
+}
+
 // Mock Chrome API
 global.chrome = {
   runtime: {

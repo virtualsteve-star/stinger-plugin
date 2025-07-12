@@ -3,7 +3,7 @@
  */
 
 import { ChromeWrapper } from '../chrome/ChromeWrapper';
-import type { StorageSchema, ExtensionConfig, PolicyRules, AuditEvent } from '../types/storage';
+import type { StorageSchema, ExtensionConfig, PolicyRules } from '../types/storage';
 import { DEFAULT_CONFIG } from '../types/storage';
 
 export interface IStorageService {
@@ -17,29 +17,42 @@ export interface IStorageService {
 export class StorageService implements IStorageService {
   private readonly MAX_STORAGE_BYTES = 5 * 1024 * 1024; // 5MB Chrome limit
   private readonly CACHE_CLEANUP_THRESHOLD = 0.9; // Clean up when 90% full
+  private isInternalOperation = false;
 
   /**
    * Get a value from storage
    */
   async get<K extends keyof StorageSchema>(key: K): Promise<StorageSchema[K] | undefined> {
-    const result = await ChromeWrapper.storage.get<Record<string, any>>(key as string);
+    try {
+      const result = await ChromeWrapper.storage.get<Record<string, any>>(key as string);
 
-    // Apply defaults for config
-    if (key === 'config' && !result[key]) {
-      return DEFAULT_CONFIG as StorageSchema[K];
+      // Apply defaults for config
+      if (key === 'config' && !result[key]) {
+        return DEFAULT_CONFIG as StorageSchema[K];
+      }
+
+      return result[key] as StorageSchema[K] | undefined;
+    } catch (error) {
+      console.error('Storage get error:', error);
+      return undefined;
     }
-
-    return result[key] as StorageSchema[K] | undefined;
   }
 
   /**
    * Set a value in storage
    */
   async set<K extends keyof StorageSchema>(key: K, value: StorageSchema[K]): Promise<void> {
-    // Check storage quota before writing
-    await this.checkStorageQuota();
+    try {
+      // Check storage quota before writing (skip for internal operations)
+      if (!this.isInternalOperation) {
+        await this.checkStorageQuota();
+      }
 
-    await ChromeWrapper.storage.set({ [key]: value });
+      await ChromeWrapper.storage.set({ [key]: value });
+    } catch (error) {
+      console.error('Storage set error:', error);
+      throw error;
+    }
   }
 
   /**
@@ -67,8 +80,13 @@ export class StorageService implements IStorageService {
    * Get configuration with defaults
    */
   async getConfig(): Promise<ExtensionConfig> {
-    const config = await this.get('config');
-    return { ...DEFAULT_CONFIG, ...config };
+    try {
+      const config = await this.get('config');
+      return { ...DEFAULT_CONFIG, ...config };
+    } catch (error) {
+      console.error('Error getting config:', error);
+      return DEFAULT_CONFIG;
+    }
   }
 
   /**
@@ -96,30 +114,7 @@ export class StorageService implements IStorageService {
     });
   }
 
-  /**
-   * Add audit event to queue
-   */
-  async addAuditEvent(event: AuditEvent): Promise<void> {
-    const queue = (await this.get('auditQueue')) || [];
-    queue.push(event);
 
-    // Limit queue size to prevent unbounded growth
-    const MAX_QUEUE_SIZE = 1000;
-    if (queue.length > MAX_QUEUE_SIZE) {
-      queue.splice(0, queue.length - MAX_QUEUE_SIZE);
-    }
-
-    await this.set('auditQueue', queue);
-  }
-
-  /**
-   * Get and clear audit queue
-   */
-  async getAndClearAuditQueue(): Promise<AuditEvent[]> {
-    const queue = (await this.get('auditQueue')) || [];
-    await this.set('auditQueue', []);
-    return queue;
-  }
 
   /**
    * Cache operations
@@ -153,7 +148,12 @@ export class StorageService implements IStorageService {
   }
 
   async clearCache(): Promise<void> {
-    await this.set('cache', {});
+    this.isInternalOperation = true;
+    try {
+      await this.set('cache', {});
+    } finally {
+      this.isInternalOperation = false;
+    }
   }
 
   /**
@@ -181,19 +181,16 @@ export class StorageService implements IStorageService {
    */
   private async checkStorageQuota(): Promise<void> {
     const bytesInUse = await this.getBytesInUse();
+    const threshold = this.MAX_STORAGE_BYTES * this.CACHE_CLEANUP_THRESHOLD;
 
-    if (bytesInUse > this.MAX_STORAGE_BYTES * this.CACHE_CLEANUP_THRESHOLD) {
+    if (bytesInUse > threshold) {
       // Clear cache first
       await this.clearCache();
 
-      // If still over quota, trim audit queue
+      // If still over quota after cache clear, log warning
       const newBytesInUse = await this.getBytesInUse();
-      if (newBytesInUse > this.MAX_STORAGE_BYTES * this.CACHE_CLEANUP_THRESHOLD) {
-        const queue = (await this.get('auditQueue')) || [];
-        if (queue.length > 100) {
-          // Keep only recent 100 events
-          await this.set('auditQueue', queue.slice(-100));
-        }
+      if (newBytesInUse > threshold) {
+        console.warn('Storage still over quota after cache clear:', newBytesInUse);
       }
     }
   }
@@ -202,25 +199,23 @@ export class StorageService implements IStorageService {
    * Initialize storage with defaults
    */
   async initialize(): Promise<void> {
-    const config = await this.get('config');
-    if (!config) {
-      await this.set('config', DEFAULT_CONFIG);
-    }
+    try {
+      const result = await ChromeWrapper.storage.get<Record<string, any>>(['config', 'cache', 'lastSync']);
+      
+      if (!result.config) {
+        await this.set('config', DEFAULT_CONFIG);
+      }
 
-    // Initialize other storage keys if needed
-    const auditQueue = await this.get('auditQueue');
-    if (!auditQueue) {
-      await this.set('auditQueue', []);
-    }
 
-    const cache = await this.get('cache');
-    if (!cache) {
-      await this.set('cache', {});
-    }
+      if (!result.cache) {
+        await this.set('cache', {});
+      }
 
-    const lastSync = await this.get('lastSync');
-    if (!lastSync) {
-      await this.set('lastSync', { rules: 0, audit: 0 });
+      if (!result.lastSync) {
+        await this.set('lastSync', { rules: 0 });
+      }
+    } catch (error) {
+      console.error('Storage initialization error:', error);
     }
   }
 }

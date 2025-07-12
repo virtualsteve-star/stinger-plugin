@@ -4,38 +4,252 @@
   <meta charset="UTF-8">
   <title>Stinger Guard</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
-      width: 300px;
-      min-height: 100px;
+      width: 350px;
       margin: 0;
-      padding: 16px;
+      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      color: #333;
     }
-    h1 {
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header h1 {
       font-size: 18px;
-      margin: 0 0 8px 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .status {
-      padding: 8px;
+    
+    .shield-icon {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .container {
+      padding: 16px;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #555;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
       border-radius: 4px;
-      margin-top: 8px;
+      font-size: 13px;
+      transition: border-color 0.2s;
     }
-    .status.active {
-      background-color: #d4edda;
-      color: #155724;
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
     }
-    .status.inactive {
-      background-color: #f8d7da;
-      color: #721c24;
+    
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .bg-green-500 {
+      background-color: #10b981;
+    }
+    
+    .bg-green-500:hover:not(:disabled) {
+      background-color: #059669;
+    }
+    
+    .bg-red-500 {
+      background-color: #ef4444;
+    }
+    
+    .bg-red-500:hover:not(:disabled) {
+      background-color: #dc2626;
+    }
+    
+    .bg-blue-500 {
+      background-color: #3b82f6;
+    }
+    
+    .bg-blue-500:hover:not(:disabled) {
+      background-color: #2563eb;
+    }
+    
+    .text-white {
+      color: white;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .status-message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 13px;
+    }
+    
+    .bg-green-100 {
+      background-color: #d1fae5;
+    }
+    
+    .text-green-800 {
+      color: #065f46;
+    }
+    
+    .bg-red-100 {
+      background-color: #fee2e2;
+    }
+    
+    .text-red-800 {
+      color: #991b1b;
+    }
+    
+    .bg-yellow-100 {
+      background-color: #fef3c7;
+    }
+    
+    .text-yellow-800 {
+      color: #92400e;
+    }
+    
+    .bg-blue-100 {
+      background-color: #dbeafe;
+    }
+    
+    .text-blue-800 {
+      color: #1e40af;
+    }
+    
+    .text-green-600 {
+      color: #059669;
+    }
+    
+    .text-red-600 {
+      color: #dc2626;
+    }
+    
+    .text-sm {
+      font-size: 12px;
+    }
+    
+    .divider {
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 16px 0;
+    }
+    
+    .w-full {
+      width: 100%;
+    }
+    
+    .flex-1 {
+      flex: 1;
+    }
+    
+    .transition-colors {
+      transition: background-color 0.2s, color 0.2s;
     }
   </style>
 </head>
 <body>
-  <h1>Stinger Guard</h1>
-  <p>Security guardrails for LLM interactions</p>
-  <div class="status active">
-    ✓ Protection Active
+  <div class="header">
+    <h1>
+      <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      Stinger Guard
+    </h1>
+    <div id="api-health" class="text-sm"></div>
   </div>
-  <script src="src/popup.ts" type="module"></script>
+  
+  <div class="container">
+    <div class="section">
+      <button id="toggle-protection" class="bg-green-500 text-white w-full">
+        Enable Protection
+      </button>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <div class="section">
+      <div class="section-title">User Configuration</div>
+      <div class="input-group">
+        <label for="user-id">User ID (Email)</label>
+        <input type="text" id="user-id" placeholder="user@example.com">
+      </div>
+      <div class="input-group">
+        <label for="user-name">Display Name</label>
+        <input type="text" id="user-name" placeholder="John Doe">
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">API Configuration</div>
+      <div class="input-group">
+        <label for="api-url">API Endpoint</label>
+        <input type="text" id="api-url" placeholder="http://localhost:8888">
+      </div>
+      <div class="button-group">
+        <button id="save-config" class="bg-blue-500 text-white flex-1">
+          Save Config
+        </button>
+        <button id="test-api" class="bg-blue-500 text-white flex-1">
+          Test API
+        </button>
+      </div>
+    </div>
+    
+    <div id="status" class="status-message" style="display: none;"></div>
+  </div>
+  
+  <script src="src/popup/popup.ts" type="module"></script>
 </body>
 </html>

@@ -144,20 +144,40 @@ export class StingerClient {
           ...fetchOptions,
           headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/json',
             ...this.config.headers,
             ...fetchOptions.headers,
           },
           signal: this.abortController.signal,
         });
 
+        if (!response) {
+          throw new Error('Fetch returned undefined response');
+        }
+
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorBody = await response.text();
-          throw new Error(`API error (${response.status}): ${errorBody}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        // Check content type - we expect JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          // For detached mode (202), empty response is OK
+          if (response.status === 202) {
+            return undefined as T;
+          }
+          // Otherwise, we expected JSON
+          throw new Error(`Expected JSON response, got ${contentType || 'unknown'}`);
+        }
+
+        const text = await response.text();
+        if (!text) {
+          throw new Error('Empty response body');
+        }
+
+        return JSON.parse(text);
       } catch (error) {
         clearTimeout(timeoutId);
 

@@ -2,6 +2,31 @@
  * API Types for Stinger Integration
  */
 
+// Conversation tracking context
+export type ParticipantType = 'human' | 'bot' | 'agent' | 'ai_model';
+
+export interface ConversationContext {
+  // Required for tracking
+  userId: string;
+  botId: string;
+  
+  // Participant types (default to human <-> ai_model)
+  userType?: ParticipantType;
+  botType?: ParticipantType;
+  
+  // Optional but recommended
+  userName?: string;
+  botName?: string;
+  botModel?: string;
+  sessionId?: string;
+  
+  // Additional context
+  browser?: string;
+  extensionVersion?: string;
+  url?: string;
+  [key: string]: unknown;
+}
+
 // Request types matching Stinger API
 export interface CheckRequest {
   text: string;
@@ -9,6 +34,7 @@ export interface CheckRequest {
   userId?: string;
   kind?: 'prompt' | 'response';
   detached?: boolean;
+  context?: ConversationContext;
 }
 
 export interface CheckResponse {

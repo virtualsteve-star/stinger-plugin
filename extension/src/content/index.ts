@@ -4,10 +4,18 @@
 
 import { MessageBus } from '../shared/messaging/MessageBus';
 import { loggers } from '../shared/logging/Logger';
-import type { ContentLoadedMessage, CheckResultMessage } from '../shared/types/messages';
+import { ChatGPTDOMObserver } from './observers/dom-observer';
+import { PromptInterceptor } from './interceptors/prompt-interceptor';
+import { ResponseMonitor } from './interceptors/response-monitor';
+import type { ContentLoadedMessage } from '../shared/types/messages';
 
 const logger = loggers.content;
 const messageBus = new MessageBus();
+
+// Components
+let domObserver: ChatGPTDOMObserver | null = null;
+let promptInterceptor: PromptInterceptor | null = null;
+let responseMonitor: ResponseMonitor | null = null;
 
 // Initialize Stinger Guard
 async function initializeStingerGuard() {
@@ -32,47 +40,78 @@ async function initializeStingerGuard() {
     // Set up response monitoring
     setupResponseMonitoring();
 
+    // Set up DOM observation
+    setupDOMObservation();
+
     logger.info('Stinger Guard initialized successfully');
   } catch (error) {
     logger.error('Failed to initialize Stinger Guard', error);
   }
 }
 
-// Handle check results from background
-messageBus.on<CheckResultMessage>('CHECK_RESULT', async (message) => {
-  logger.info('Received check result', message.payload);
-
-  // TODO: Implement UI feedback based on action
-  switch (message.payload.action) {
-    case 'block':
-      logger.warn('Content blocked', message.payload.reasons);
-      // TODO: Show block UI
-      break;
-
-    case 'warn':
-      logger.warn('Content warning', message.payload.warnings);
-      // TODO: Show warning UI
-      break;
-
-    case 'allow':
-      logger.debug('Content allowed');
-      break;
-  }
-
-  return { success: true };
-});
-
-// Placeholder for prompt interception
+// Set up prompt interception
 function setupPromptInterception() {
   logger.debug('Setting up prompt interception...');
-  // TODO: Implement in Phase 3
+  
+  promptInterceptor = new PromptInterceptor(messageBus);
+  promptInterceptor.start();
 }
 
-// Placeholder for response monitoring
+// Set up response monitoring
 function setupResponseMonitoring() {
   logger.debug('Setting up response monitoring...');
-  // TODO: Implement in Phase 3
+  
+  responseMonitor = new ResponseMonitor(messageBus);
 }
+
+// Set up DOM observation
+function setupDOMObservation() {
+  logger.debug('Setting up DOM observation...');
+  
+  domObserver = new ChatGPTDOMObserver({
+    onNewUserMessage: (_text) => {
+      logger.debug('New user message detected via DOM observation');
+      // The prompt interceptor handles checking before submission
+    },
+    
+    onNewAssistantMessage: (text) => {
+      logger.debug('New assistant message detected');
+      if (responseMonitor) {
+        responseMonitor.checkResponse(text);
+      }
+    },
+    
+    onAssistantMessageUpdate: (text) => {
+      logger.debug('Assistant message updated');
+      if (responseMonitor) {
+        responseMonitor.checkResponse(text);
+      }
+    },
+    
+    onGenerationStart: () => {
+      logger.debug('Response generation started');
+    },
+    
+    onGenerationEnd: () => {
+      logger.debug('Response generation ended');
+    },
+  });
+  
+  domObserver.start();
+}
+
+// Clean up on unload
+window.addEventListener('unload', () => {
+  logger.info('Content script unloading, cleaning up...');
+  
+  if (domObserver) {
+    domObserver.stop();
+  }
+  
+  if (promptInterceptor) {
+    promptInterceptor.stop();
+  }
+});
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {

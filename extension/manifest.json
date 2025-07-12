@@ -5,7 +5,8 @@
   "description": "Security guardrails for LLM interactions",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "identity"
   ],
   "host_permissions": [
     "https://chat.openai.com/*",

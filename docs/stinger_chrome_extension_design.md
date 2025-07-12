@@ -124,7 +124,7 @@ Out‑of‑scope for v0.1: mobile browsers, non‑Chromium browsers, offline mod
 - **CSP:** `script-src 'self'; connect-src 'self' https://stinger-api.example.com`.
 - **Isolated World:** CS runs in isolated world; no direct eval.
 - **No remote code execution:** Rules JSON contains static patterns & thresholds, not executable JS.
-- **PII minimisation:** Only hash of prompt/response stored locally; full text sent to API over HTTPS **with device certificate**.
+- **PII minimisation:** No prompt/response data stored locally; all content sent to API over HTTPS for centralized audit logging and SIEM integration.
 - **Minimum permissions:** No tab access, no cookies, no file URL access.
 
 ---

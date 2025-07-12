@@ -10,6 +10,7 @@ export interface ExtensionConfig {
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   tenantId?: string;
   userId?: string;
+  userName?: string;
 }
 
 // Cached policy rules
@@ -23,18 +24,8 @@ export interface PolicyRules {
   lastUpdated: number;
 }
 
-// Audit event for logging
-export interface AuditEvent {
-  id: string;
-  timestamp: number;
-  type: 'prompt' | 'response';
-  action: 'allow' | 'warn' | 'block';
-  text: string;
-  hash: string;
-  url: string;
-  reasons?: string[];
-  metadata?: Record<string, any>;
-}
+// Note: Audit events are NOT stored locally
+// All audit logging is handled by the Stinger backend
 
 // Response cache entry
 export interface CacheEntry {
@@ -47,11 +38,10 @@ export interface CacheEntry {
 export interface StorageSchema {
   config: ExtensionConfig;
   rules?: PolicyRules;
-  auditQueue: AuditEvent[];
   cache: Record<string, CacheEntry>;
   lastSync: {
     rules: number;
-    audit: number;
+    // Note: No audit sync - auditing is backend-only
   };
 }
 
@@ -59,7 +49,6 @@ export interface StorageSchema {
 export enum StorageKeys {
   CONFIG = 'config',
   RULES = 'rules',
-  AUDIT_QUEUE = 'auditQueue',
   CACHE = 'cache',
   LAST_SYNC = 'lastSync',
 }

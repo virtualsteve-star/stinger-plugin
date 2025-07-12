@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This execution plan outlines the development of the Stinger Guard Chrome Extension MVP (Minimum Viable Product), which will demonstrate the ability to intercept ChatGPT traffic and route it to the Stinger Policy API for audit logging. This proof of concept focuses on core functionality over 5 weeks, with future phases planned for enterprise features.
+This execution plan outlines the development of the Stinger Guard Chrome Extension MVP (Minimum Viable Product), which will demonstrate the ability to intercept ChatGPT traffic and route it to the Stinger Policy API for security checks and centralized audit logging. The Stinger backend handles all audit storage and SIEM integration - the plugin does NOT store audit logs locally. This proof of concept focuses on core functionality over 5 weeks, with future phases planned for enterprise features.
 
 ## Key Assumptions
 
@@ -186,8 +186,8 @@ This execution plan outlines the development of the Stinger Guard Chrome Extensi
   interface StorageSchema {
     config: ExtensionConfig
     rules: PolicyRules
-    auditQueue: AuditEvent[]
-    cache: ResponseCache
+    cache: ResponseCache  // Performance cache only
+    // NO auditQueue - auditing handled by backend
   }
   ```
 - [ ] Implement storage abstraction
@@ -207,15 +207,12 @@ This execution plan outlines the development of the Stinger Guard Chrome Extensi
 
 ## Phase 5: Security & Audit Features (Week 5-6)
 
-### 5.1 Audit System
-- [ ] Design comprehensive audit event schema
-- [ ] Implement event collection:
-  - User actions
-  - System decisions
-  - Performance metrics
-- [ ] Add event queuing with persistence
-- [ ] Implement batch upload to SIEM
-- [ ] Add audit export functionality
+### 5.1 Audit System Integration
+- [ ] Ensure all prompts/responses are sent to Stinger API
+- [ ] Verify API audit logging is working correctly
+- [ ] Confirm no local storage of audit events
+- [ ] Test SIEM integration from backend (not plugin responsibility)
+- [ ] Document audit flow: Plugin → API → Backend Storage → SIEM
 
 ### 5.2 Security Hardening
 - [ ] Implement Content Security Policy

@@ -7,6 +7,8 @@ import { storageService } from '../shared/storage/StorageService';
 import { stingerClient } from '../shared/api/StingerClient';
 import { loggers } from '../shared/logging/Logger';
 import { withErrorHandler } from '../shared/utils/error-handling';
+import { buildConversationContext } from '../shared/utils/conversation-tracking';
+import { rulesManager } from '../shared/rules/RulesManager';
 import type {
   ContentLoadedMessage,
   CheckPromptMessage,
@@ -40,10 +42,13 @@ async function initialize() {
       logger.warn('API health check failed', health.error);
     }
 
-    // Load rules
-    const rules = await stingerClient.getRules();
-    if (rules.success) {
-      logger.info('Rules loaded', { version: rules.data.version });
+    // Start rules synchronization
+    rulesManager.startSync();
+    
+    // Load initial rules
+    const rules = await rulesManager.getRules();
+    if (rules) {
+      logger.info('Rules loaded', { version: rules.version });
     }
 
     logger.info('Background service worker initialized');
@@ -77,27 +82,28 @@ messageBus.on<CheckPromptMessage>('CHECK_PROMPT', async (message, sender) => {
 
   try {
     const config = await storageService.getConfig();
+    
+    // Build conversation context from the tab URL
+    const tabUrl = sender.tab?.url || 'unknown';
+    const context = await buildConversationContext(tabUrl);
+    
     const result = await stingerClient.checkContent({
       text: message.payload.text,
       kind: 'prompt',
       tenantId: config.tenantId,
       userId: config.userId,
+      context: context,
     });
 
     if (result.success) {
-      // Log audit event
-      await storageService.addAuditEvent({
-        id: `audit-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'prompt',
+      // Note: Audit logging is handled by the Stinger backend
+      // We do NOT store audit events locally
+      logger.debug('Prompt check complete', {
         action: result.data.action,
-        text: message.payload.text,
-        hash: await hashText(message.payload.text),
-        url: sender.tab?.url || 'unknown',
-        reasons: result.data.reasons,
-        metadata: message.payload.metadata,
+        userId: context.userId,
+        botId: context.botId,
       });
-
+      
       // Send result back to content script
       const response: CheckResultMessage = {
         id: `result-${Date.now()}`,
@@ -135,27 +141,28 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
 
   try {
     const config = await storageService.getConfig();
+    
+    // Build conversation context from the tab URL
+    const tabUrl = sender.tab?.url || 'unknown';
+    const context = await buildConversationContext(tabUrl);
+    
     const result = await stingerClient.checkContent({
       text: message.payload.text,
       kind: 'response',
       tenantId: config.tenantId,
       userId: config.userId,
+      context: context,
     });
 
     if (result.success) {
-      // Log audit event
-      await storageService.addAuditEvent({
-        id: `audit-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'response',
+      // Note: Audit logging is handled by the Stinger backend
+      // We do NOT store audit events locally
+      logger.debug('Response check complete', {
         action: result.data.action,
-        text: message.payload.text,
-        hash: await hashText(message.payload.text),
-        url: sender.tab?.url || 'unknown',
-        reasons: result.data.reasons,
-        metadata: message.payload.metadata,
+        userId: context.userId,
+        botId: context.botId,
       });
-
+      
       // Send result back to content script
       const response: CheckResultMessage = {
         id: `result-${Date.now()}`,
@@ -184,14 +191,6 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
   }
 });
 
-// Simple hash function for MVP
-async function hashText(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 // Handle extension installation/update
 chrome.runtime.onInstalled.addListener(
