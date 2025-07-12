@@ -1,5 +1,9 @@
 # Stinger Plugin
 
+[![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/codeql.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/codeql.yml)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+
 A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms.
 
 ## ⚠️ Evaluation License

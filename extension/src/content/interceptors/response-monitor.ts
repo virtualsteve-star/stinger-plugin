@@ -23,20 +23,54 @@ export class ResponseMonitor {
   private messageBus: MessageBus;
   private lastCheckedResponse = '';
   private isCheckingResponse = false;
+  private pendingCheck: NodeJS.Timeout | null = null;
+  private hasBlockedCurrentResponse = false;
 
   constructor(messageBus: MessageBus) {
     this.messageBus = messageBus;
   }
 
   /**
+   * Reset state for a new message
+   */
+  resetForNewMessage(): void {
+    this.hasBlockedCurrentResponse = false;
+    this.lastCheckedResponse = '';
+    if (this.pendingCheck) {
+      clearTimeout(this.pendingCheck);
+      this.pendingCheck = null;
+    }
+  }
+
+  /**
    * Check a new or updated response
    */
   async checkResponse(text: string): Promise<void> {
+    // Skip if we've already blocked this response
+    if (this.hasBlockedCurrentResponse) {
+      return;
+    }
+
     // Skip if same as last checked
     if (text === this.lastCheckedResponse) {
       return;
     }
 
+    // Cancel any pending check
+    if (this.pendingCheck) {
+      clearTimeout(this.pendingCheck);
+    }
+
+    // Debounce: wait 200ms for streaming to pause
+    this.pendingCheck = setTimeout(() => {
+      this.performCheck(text);
+    }, 200);
+  }
+
+  /**
+   * Actually perform the check
+   */
+  private async performCheck(text: string): Promise<void> {
     // Skip if already checking
     if (this.isCheckingResponse) {
       return;
@@ -82,6 +116,7 @@ export class ResponseMonitor {
         case 'block':
           // Hide or redact the response
           this.blockResponse(result.reasons || []);
+          this.hasBlockedCurrentResponse = true;
           break;
       }
     } catch (error) {

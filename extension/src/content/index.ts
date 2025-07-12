@@ -77,6 +77,7 @@ function setupDOMObservation() {
     onNewAssistantMessage: (text) => {
       logger.debug('New assistant message detected');
       if (responseMonitor) {
+        responseMonitor.resetForNewMessage();
         responseMonitor.checkResponse(text);
       }
     },
