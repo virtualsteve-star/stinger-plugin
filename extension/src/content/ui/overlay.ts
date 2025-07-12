@@ -2,6 +2,8 @@
  * UI Overlay for Stinger warnings and blocks
  */
 
+import { UI_CONFIG } from '../../shared/constants';
+
 export class StingerOverlay {
   private overlayContainer: HTMLDivElement | null = null;
 
@@ -143,7 +145,7 @@ export class StingerOverlay {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999999;
+      z-index: ${UI_CONFIG.OVERLAY_Z_INDEX};
     `;
 
     document.body.appendChild(this.overlayContainer);

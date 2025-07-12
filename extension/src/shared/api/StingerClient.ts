@@ -11,6 +11,7 @@ import type {
 } from '../types/api';
 import { retry } from '../utils/helpers';
 import { storageService } from '../storage/StorageService';
+import { API_CONFIG } from '../constants';
 
 export interface ApiConfig {
   baseUrl: string;
@@ -25,9 +26,9 @@ export class StingerClient {
 
   constructor(config: Partial<ApiConfig> = {}) {
     this.config = {
-      baseUrl: 'http://localhost:8888',
-      timeout: 2000,
-      maxRetries: 1,
+      baseUrl: process.env.STINGER_API_URL || 'http://localhost:8888',
+      timeout: API_CONFIG.DEFAULT_TIMEOUT,
+      maxRetries: API_CONFIG.MAX_RETRIES,
       ...config,
     };
   }
@@ -37,6 +38,19 @@ export class StingerClient {
    */
   async checkContent(request: CheckRequest): Promise<ApiResult<CheckResponse>> {
     try {
+      // Validate input
+      if (!request.text || typeof request.text !== 'string') {
+        return { success: false, error: { message: 'Invalid text content', code: 'INVALID_INPUT' } };
+      }
+      
+      if (request.text.length > API_CONFIG.MAX_TEXT_LENGTH) {
+        return { success: false, error: { message: 'Text content too large', code: 'TEXT_TOO_LARGE' } };
+      }
+
+      if (!request.tenantId || !request.userId) {
+        return { success: false, error: { message: 'Missing required tenant or user ID', code: 'MISSING_IDS' } };
+      }
+
       // Check cache first for identical requests
       const cacheKey = `check:${JSON.stringify(request)}`;
       const cached = await storageService.getCached<CheckResponse>(cacheKey);

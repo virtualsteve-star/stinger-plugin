@@ -6,6 +6,7 @@ import { MessageBus } from '../../shared/messaging/MessageBus';
 import { loggers } from '../../shared/logging/Logger';
 import { getPromptInput, getSubmitButton } from '../selectors/chatgpt';
 import { StingerOverlay } from '../ui/overlay';
+import { UI_CONFIG, SECURITY_CONFIG } from '../../shared/constants';
 import type { CheckPromptMessage, CheckResultMessage } from '../../shared/types/messages';
 
 const logger = loggers.content;
@@ -19,6 +20,8 @@ export class PromptInterceptor {
   private overlay: StingerOverlay;
   private interceptedElements = new WeakSet<Element>();
   private lastKnownValue = '';
+  private intervalId: number | null = null;
+  private mutationObserver: MutationObserver | null = null;
 
   constructor(messageBus: MessageBus) {
     this.messageBus = messageBus;
@@ -78,6 +81,18 @@ export class PromptInterceptor {
     if (this.submitButton && this.originalSubmitHandler) {
       this.submitButton.removeEventListener('click', this.handleSubmitClick);
       this.submitButton.addEventListener('click', this.originalSubmitHandler);
+    }
+
+    // Clean up interval
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+
+    // Clean up mutation observer
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+      this.mutationObserver = null;
     }
   }
 
@@ -355,11 +370,11 @@ export class PromptInterceptor {
 
       unsubscribe = this.messageBus.on('CHECK_RESULT', handler);
 
-      // Timeout after 5 seconds
+      // Timeout after configured time
       setTimeout(() => {
         unsubscribe?.();
         resolve({ action: 'allow', reasons: [], warnings: [], originalMessageId: '' });
-      }, 5000);
+      }, SECURITY_CONFIG.PROMPT_CHECK_TIMEOUT);
     });
   }
 
@@ -405,7 +420,7 @@ export class PromptInterceptor {
       if (this.promptInput) {
         this.promptInput.addEventListener('keydown', this.handleKeyDown, true);
       }
-    }, 100);
+    }, UI_CONFIG.BUTTON_CLICK_DELAY);
   }
 
   /**
@@ -443,8 +458,16 @@ export class PromptInterceptor {
    * Monitor for element changes
    */
   private monitorForElementChanges(): void {
+    // Clean up existing observers
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+    }
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+    }
+
     // Use MutationObserver for better performance
-    const observer = new MutationObserver(() => {
+    this.mutationObserver = new MutationObserver(() => {
       const currentInput = getPromptInput();
       const currentButton = getSubmitButton();
 
@@ -456,14 +479,14 @@ export class PromptInterceptor {
 
     // Observe the main content area
     const mainContent = document.querySelector('main') || document.body;
-    observer.observe(mainContent, {
+    this.mutationObserver.observe(mainContent, {
       childList: true,
       subtree: true,
       attributes: false,
     });
 
     // Also check periodically as backup
-    window.setInterval(() => {
+    this.intervalId = window.setInterval(() => {
       const currentInput = getPromptInput();
       const currentButton = getSubmitButton();
 
@@ -471,7 +494,7 @@ export class PromptInterceptor {
         logger.debug('Elements changed (interval check), re-setting up interception');
         this.setupInterception();
       }
-    }, 2000);
+    }, UI_CONFIG.ELEMENT_CHECK_INTERVAL);
   }
 
   /**
