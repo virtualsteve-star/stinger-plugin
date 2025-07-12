@@ -10,7 +10,6 @@ import type { PolicyRules } from '../types/storage';
 const logger = loggers.background;
 
 export class RulesManager {
-  private syncInterval: number | null = null;
   private readonly SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
   
   /**
@@ -22,10 +21,10 @@ export class RulesManager {
     // Initial sync
     this.syncRules();
     
-    // Set up periodic sync
-    this.syncInterval = window.setInterval(() => {
-      this.syncRules();
-    }, this.SYNC_INTERVAL);
+    // Set up periodic sync using Chrome alarms API (service workers don't have setInterval)
+    // this.syncInterval = setInterval(() => {
+    //   this.syncRules();
+    // }, this.SYNC_INTERVAL);
     
     // Also sync on alarm (Chrome's preferred method for background tasks)
     chrome.alarms.create('sync-rules', { periodInMinutes: 5 });
@@ -40,10 +39,6 @@ export class RulesManager {
    * Stop automatic synchronization
    */
   stopSync(): void {
-    if (this.syncInterval) {
-      clearInterval(this.syncInterval);
-      this.syncInterval = null;
-    }
     chrome.alarms.clear('sync-rules');
     logger.info('Stopped rules synchronization');
   }
@@ -117,7 +112,9 @@ export class RulesManager {
    * Notify all tabs about rule updates
    */
   private async notifyRuleUpdate(rules: PolicyRules): Promise<void> {
-    const tabs = await chrome.tabs.query({ url: 'https://chat.openai.com/*' });
+    const tabs = await chrome.tabs.query({ 
+      url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'] 
+    });
     
     for (const tab of tabs) {
       if (tab.id) {

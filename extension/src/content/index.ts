@@ -113,9 +113,19 @@ window.addEventListener('unload', () => {
   }
 });
 
+// Log initial state
+logger.info('Content script loaded', {
+  url: window.location.href,
+  readyState: document.readyState,
+  timestamp: new Date().toISOString()
+});
+
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
+  logger.info('Waiting for DOMContentLoaded...');
   document.addEventListener('DOMContentLoaded', initializeStingerGuard);
 } else {
-  initializeStingerGuard();
+  // Give ChatGPT a moment to fully render
+  logger.info('DOM ready, initializing in 1 second...');
+  setTimeout(initializeStingerGuard, 1000);
 }

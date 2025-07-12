@@ -24,7 +24,7 @@ export function detectAISystem(url: string): {
   const hostname = new URL(url).hostname;
   
   // Standard AI models
-  if (hostname.includes('chat.openai.com')) {
+  if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
     return {
       id: 'chatgpt',
       name: 'ChatGPT',
@@ -67,6 +67,11 @@ export function detectAISystem(url: string): {
  * Detect the ChatGPT model from the page
  */
 function detectChatGPTModel(): string {
+  // In service worker context, we can't access document
+  if (typeof document === 'undefined') {
+    return 'gpt-4'; // Default for background context
+  }
+  
   // Look for model selector button
   const modelButton = document.querySelector('button[aria-haspopup="menu"]');
   if (modelButton) {
@@ -82,7 +87,12 @@ function detectChatGPTModel(): string {
 /**
  * Detect if the current user is automated (bot/agent)
  */
-function detectUserType(): ParticipantType {
+function detectUserType(url?: string): ParticipantType {
+  // In service worker context, we can't access window/document
+  if (typeof window === 'undefined') {
+    return 'human'; // Default for background context
+  }
+  
   // Check for automation indicators
   if (window.location.search.includes('automated=true')) {
     return 'bot';
@@ -108,13 +118,13 @@ function detectUserType(): ParticipantType {
 /**
  * Get or create user identification
  */
-export async function getUserIdentification(): Promise<{ 
+export async function getUserIdentification(url?: string): Promise<{ 
   userId: string; 
   userName?: string;
   userType: ParticipantType;
 }> {
   const config = await storageService.getConfig();
-  const userType = detectUserType();
+  const userType = detectUserType(url);
   
   // Check if user has configured their identity
   if (config.userId) {
@@ -154,19 +164,21 @@ export async function getUserIdentification(): Promise<{
  */
 export async function buildConversationContext(url: string): Promise<ConversationContext> {
   const [userInfo, aiSystem] = await Promise.all([
-    getUserIdentification(),
+    getUserIdentification(url),
     Promise.resolve(detectAISystem(url))
   ]);
   
   const manifest = chrome.runtime.getManifest();
   
-  // Get browser info
-  const userAgent = navigator.userAgent;
+  // Get browser info (navigator should be available in service workers)
   let browser = 'Unknown';
-  if (userAgent.includes('Chrome')) browser = 'Chrome';
-  else if (userAgent.includes('Firefox')) browser = 'Firefox';
-  else if (userAgent.includes('Safari')) browser = 'Safari';
-  else if (userAgent.includes('Edge')) browser = 'Edge';
+  if (typeof navigator !== 'undefined' && navigator.userAgent) {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+  }
   
   return {
     // Required

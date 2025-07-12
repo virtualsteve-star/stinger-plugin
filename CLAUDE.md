@@ -46,6 +46,19 @@ npm run ci              # Full validation (typecheck, lint, test, build)
 5. Select the `dist` directory
 ```
 
+## Quick Build & Test
+
+When making changes to the extension:
+```bash
+# Build the extension
+npm run build
+
+# Then reload in Chrome:
+# 1. Go to chrome://extensions/
+# 2. Find "Stinger Guard Plugin"
+# 3. Click the refresh/reload icon
+```
+
 ## Test the Stinger API Connection
 
 ```bash

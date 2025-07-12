@@ -7,20 +7,27 @@
 
 export const ChatGPTSelectors = {
   // Main chat input
-  promptInput: 'textarea[data-id="root"]',
+  promptInput: 'textarea[name="prompt-textarea"]',
   
   // Alternative selectors for input (ChatGPT sometimes changes these)
   alternativeInputs: [
+    'textarea[placeholder*="Ask anything"]',
     'textarea[placeholder*="Send a message"]',
     'textarea[placeholder*="Message"]',
-    '#prompt-textarea'
+    '#prompt-textarea',
+    '[contenteditable="true"]'
   ],
   
-  // Submit button
+  // Submit button (appears when textarea has content)
   submitButton: 'button[data-testid="send-button"]',
   alternativeSubmitButtons: [
     'button[aria-label*="Send"]',
-    'button svg.w-4.h-4', // Sometimes the button just has an SVG
+    'button[aria-label="Send prompt"]',
+    'button[aria-label="Send message"]',
+    // Look for the button that appears after typing
+    'div[data-visible] button:has(svg)',
+    // Button that contains the send icon path
+    'button:has(path[d*="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8"])',
   ],
   
   // Message containers
@@ -63,15 +70,45 @@ export const ChatGPTSelectors = {
 /**
  * Get the current prompt input element
  */
-export function getPromptInput(): HTMLTextAreaElement | null {
+export function getPromptInput(): HTMLTextAreaElement | HTMLElement | null {
   // Try primary selector first
   let input = document.querySelector<HTMLTextAreaElement>(ChatGPTSelectors.promptInput);
+  
+  // Skip if it's hidden
+  if (input && (input.style.display === 'none' || input.offsetParent === null)) {
+    input = null;
+  }
   
   if (!input) {
     // Try alternative selectors
     for (const selector of ChatGPTSelectors.alternativeInputs) {
-      input = document.querySelector<HTMLTextAreaElement>(selector);
-      if (input) break;
+      const candidate = document.querySelector<HTMLTextAreaElement>(selector);
+      // Only use visible elements
+      if (candidate && candidate.style.display !== 'none' && candidate.offsetParent !== null) {
+        input = candidate;
+        break;
+      }
+    }
+  }
+  
+  // If still not found, try contenteditable (which is what ChatGPT actually uses!)
+  if (!input) {
+    const contentEditable = document.querySelector('[contenteditable="true"]');
+    if (contentEditable) {
+      return contentEditable as HTMLElement;
+    }
+  }
+  
+  // If still not found, try more generic approach
+  if (!input) {
+    const textareas = document.querySelectorAll('textarea');
+    for (const ta of textareas) {
+      const textarea = ta as HTMLTextAreaElement;
+      // Only use visible textareas
+      if (textarea.style.display !== 'none' && textarea.offsetParent !== null) {
+        input = textarea;
+        break;
+      }
     }
   }
   
@@ -88,6 +125,19 @@ export function getSubmitButton(): HTMLButtonElement | null {
     for (const selector of ChatGPTSelectors.alternativeSubmitButtons) {
       button = document.querySelector<HTMLButtonElement>(selector);
       if (button) break;
+    }
+  }
+  
+  // If still not found, try to find the send button that appears when typing
+  if (!button) {
+    // Look for buttons that might be the send button (usually has specific styling)
+    const possibleButtons = document.querySelectorAll('button[aria-label]:not([aria-label*="Add"]):not([aria-label*="Choose"]):not([aria-label*="voice"]):not([aria-label*="Dictate"])');
+    for (const btn of possibleButtons) {
+      const ariaLabel = btn.getAttribute('aria-label') || '';
+      if (ariaLabel.toLowerCase().includes('send')) {
+        button = btn as HTMLButtonElement;
+        break;
+      }
     }
   }
   
