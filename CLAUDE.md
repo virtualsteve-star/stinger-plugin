@@ -9,8 +9,10 @@ Stinger Guard is a Chrome Extension (Manifest V3) that monitors and enforces sec
 ### Current Status
 - ✅ Phase 1 Complete: Project setup with TypeScript, Vite, Jest, and Chrome extension structure
 - ✅ Phase 2 Complete: Core infrastructure (messaging, storage, API client, logging)
-- 🚧 Phase 3 Next: Content Script Development for ChatGPT integration
-- MVP Focus: ChatGPT only, basic allow/warn/block functionality
+- ✅ Phase 3 Complete: Content Script Development for ChatGPT integration
+- ✅ **MVP Complete**: Working Chrome extension with prompt interception, API integration, and UI
+- ✅ CI/CD Pipeline: GitHub Actions with cross-platform testing and quality checks
+- ✅ Post-Release Planning: 5 detailed RFEs filed for future enhancements
 
 ## Development Commands
 
@@ -63,7 +65,8 @@ npm run build
 
 ```bash
 # Ensure Stinger API is running on port 8888
-node test-api.js        # Test API endpoints
+node tests/test-api.js        # Test API endpoints
+node tests/test-conversation.js  # Test conversation tracking
 ```
 
 ## Architecture Overview
@@ -105,8 +108,11 @@ The extension consists of three main components:
   - `src/background/` - Service worker
   - `src/shared/` - Shared types and utilities
 - `dist/` - Built extension (git-ignored, load this in Chrome)
-- `tests/` - Test files
-- `test-api.js` - Stinger API validation script
+- `tests/` - Test files and scripts
+  - `test-api.js` - Stinger API validation script
+  - `test-conversation.js` - Conversation tracking test
+  - `unit/` - Jest unit tests
+- `docs/plans/` - Planning documents and roadmaps
 - `.env` - Local environment configuration
 
 ## Development Workflow
@@ -125,7 +131,9 @@ The extension consists of three main components:
 
 3. **Testing Changes**
    - Unit tests: `npm test`
-   - Manual testing: Visit https://chat.openai.com
+   - API tests: `node tests/test-api.js`
+   - Conversation tracking: `node tests/test-conversation.js`
+   - Manual testing: Visit https://chatgpt.com
    - Check console for "Stinger Guard:" messages
 
 4. **Before Committing**
@@ -156,15 +164,23 @@ The extension consists of three main components:
 - Chrome API mocks for testing
 - 100% test passing rate
 
-## Next Steps (Phase 3)
+## Post-Release Roadmap
 
-1. **Content Script Development**
-   - Implement ChatGPT DOM monitoring
-   - Intercept prompt submission
-   - Monitor response streaming
-   - Add UI feedback components
+See `docs/plans/POST_RELEASE_ROADMAP.md` for detailed implementation plan with 5 filed RFEs:
 
-2. **Background Worker Integration**
-   - Connect content script to API
-   - Implement audit queue processing
-   - Add alarm-based syncing
+1. **Issue #4: API Authentication** (High Priority, 5-7 days)
+   - JWT token management and secure API communications
+
+2. **Issue #7: Integration Testing Framework** (High Priority, 7-10 days) 
+   - End-to-end testing with Chrome extension lifecycle
+
+3. **Issue #3: Comprehensive Retry Logic** (Medium Priority, 2-3 days)
+   - Exponential backoff and circuit breaker patterns
+
+4. **Issue #6: LRU Cache Eviction** (Medium Priority, 3-4 days)
+   - Bounded memory usage and cache optimization
+
+5. **Issue #5: Enhanced Error Reporting** (Medium Priority, 4-5 days)
+   - Structured telemetry and user-friendly error messages
+
+**Total Estimated Effort**: 21-29 days across 3 development sprints
