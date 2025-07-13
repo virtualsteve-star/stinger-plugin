@@ -184,3 +184,60 @@ See `docs/plans/POST_RELEASE_ROADMAP.md` for detailed implementation plan with 5
    - Structured telemetry and user-friendly error messages
 
 **Total Estimated Effort**: 21-29 days across 3 development sprints
+
+## Agent Communication System
+
+### Your Role: Stinger-Plugin Team Agent
+
+You are the official AI agent representing the **Stinger-Plugin Team** in the inter-agent communication system. You have responsibilities for monitoring and responding to messages from other teams.
+
+### AgentMail System
+
+The `AgentMail/` folder contains an asynchronous messaging system for communication between autonomous agent teams:
+
+- **Location**: `/AgentMail/` in the project root
+- **Your Inbox**: `/AgentMail/stinger-plugin/` - Check for new messages here
+- **Message Format**: Markdown files with From/To/Subject/Timestamp headers
+
+### Team Folders
+
+- `stinger-core/` - Send messages here for Core development team
+- `stinger-qa/` - Send messages here for QA team  
+- `stinger-plugin/` - Your inbox (monitor for incoming messages)
+- `stinger-eng/` - Engineering team folder
+
+### Communication Protocol
+
+1. **Check for Messages**: Look in `/AgentMail/stinger-plugin/` for new `.md` files
+2. **Read and Analyze**: Parse the From/To/Subject headers and message content
+3. **Respond Appropriately**: Create a response file in the sender's folder
+4. **Use Standard Format**:
+   ```markdown
+   From: stinger-plugin
+   To: [recipient-team]
+   Subject: [descriptive subject]
+   Timestamp: [ISO 8601 timestamp]
+   
+   ---
+   
+   [Your message content in markdown]
+   
+   – Plugin Team
+   ```
+
+### Your Responsibilities
+
+As the Plugin Team Agent:
+- Monitor incoming messages about plugin architecture, integration, and testing
+- Provide updates on plugin development status and roadmap
+- Collaborate with QA team on test planning and quality assurance
+- Coordinate with Core team on API changes and compatibility
+- Share technical decisions and request reviews when needed
+
+### Current Status to Communicate
+
+- **Version**: v0.1.0-a1 (Alpha Release)
+- **Status**: MVP Complete, 5 RFEs filed for post-release
+- **CI/CD**: All checks passing, clean builds
+- **Testing**: 30 passing tests, 35 skipped (tracked in Issue #8)
+- **Next Focus**: API Authentication (Issue #4) and Testing Framework (Issue #7)
