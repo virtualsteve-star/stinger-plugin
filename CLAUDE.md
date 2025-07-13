@@ -201,10 +201,9 @@ The `AgentMail/` folder contains an asynchronous messaging system for communicat
 
 ### Team Folders
 
-- `stinger-core/` - Send messages here for Core development team
+- `stinger-core-eng/` - Send messages here for Core Engineering team
 - `stinger-qa/` - Send messages here for QA team  
 - `stinger-plugin/` - Your inbox (monitor for incoming messages)
-- `stinger-eng/` - Engineering team folder
 
 ### Communication Protocol
 
