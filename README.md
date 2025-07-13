@@ -1,28 +1,34 @@
-# Stinger Plugin
+# Stinger Guard Chrome Extension
 
 [![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/codeql.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/codeql.yml)
+[![Version](https://img.shields.io/badge/version-0.1.0--a1-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
 [![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.1.0a3-brightgreen)](https://github.com/virtualsteve-star/stinger)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms.
 
-## ⚠️ Evaluation License
+## 🚀 Alpha Release v0.1.0-a1
 
-**This software is provided for EVALUATION PURPOSES ONLY under a proprietary license. Commercial use is strictly prohibited. See [LICENSE](LICENSE) for details.**
+The Stinger Guard Chrome Extension is now available as an alpha release! This MVP provides core functionality for intercepting and checking prompts on ChatGPT with the Stinger API.
 
 ## Overview
 
 Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces security policies for prompts and responses on LLM interfaces like ChatGPT and Microsoft Copilot. It integrates with the [Stinger](https://github.com/virtualsteve-star/stinger) policy engine to prevent sensitive data leakage and enforce enterprise security policies.
 
-### Key Features
+### Key Features (v0.1.0-a1)
 
-- 🛡️ **Real-time Content Filtering** - Scans prompts before submission and responses as they arrive
-- 🔍 **PII Detection** - Identifies and blocks personal identifiable information
-- 🚫 **Secret Prevention** - Detects API keys, passwords, and other credentials
-- 📊 **Audit Logging** - Comprehensive security event logging for SOC teams
-- 🏢 **Enterprise Ready** - Centralized policy management and deployment
-- 🌐 **Multi-Platform Support** - Works with ChatGPT, Microsoft Copilot, and more
+- ✅ **Prompt Interception** - Captures prompts before submission on ChatGPT (Enter key & Submit button)
+- ✅ **Real-time Security Checks** - Validates content against Stinger API guardrails
+- ✅ **User Interface** - Shows warnings/blocks with allow/deny options
+- ✅ **Conversation Tracking** - Tracks participant types (human/bot/agent/ai_model)
+- ✅ **Response Monitoring** - Checks AI responses for policy violations
+- ✅ **Audit Logging** - All security events logged to Stinger backend
+
+### Coming Soon
+- 🔜 API Authentication (Issue #4)
+- 🔜 Enhanced retry logic (Issue #3)
+- 🔜 Advanced error reporting (Issue #5)
+- 🔜 Performance optimizations (Issue #6)
 
 ## Architecture
 
@@ -38,58 +44,59 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 
 ## Documentation
 
+- [Installation Guide](docs/installation-guide.md)
 - [Technical Design Document](docs/stinger_chrome_extension_design.md)
-- [Execution Plan](docs/plans/stinger-plugin-execution-plan.md)
 - [Development Guide](CLAUDE.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md)
 
-## Project Status
+## Installation
 
-🚧 **Under Development** - This project is in active development. MVP targeted for 5-week development cycle.
+### From Release (Recommended)
+1. Download the latest release from [Releases](https://github.com/virtualsteve-star/stinger-plugin/releases)
+2. Extract the ZIP file
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" in the top right
+5. Click "Load unpacked" and select the extracted folder
 
-### Development Progress
-- ✅ **Phase 1: Project Setup & Infrastructure** (Complete)
-  - TypeScript + Vite build system configured
-  - Chrome Extension Manifest V3 structure
-  - Testing infrastructure (Jest + Playwright)
-  - Basic extension loads in Chrome
-  
-- 🔄 **Phase 2: Core Infrastructure** (In Progress)
-  - Message passing system
-  - Storage abstraction
-  - API client development
-  
-- ⏳ **Phase 3: Content Script Development** (Upcoming)
-- ⏳ **Phase 4: Background Worker & API Integration** (Upcoming)
-- ⏳ **Phase 5: Testing & Demo Preparation** (Upcoming)
-
-## Prerequisites
-
-- Node.js 18+ and npm
-- Chrome 118+ for development
-- Access to Stinger Policy API (provided by [Stinger core](https://github.com/virtualsteve-star/stinger))
-
-## Quick Start
-
+### From Source
 ```bash
-# Clone the repository
+# Clone and build
 git clone https://github.com/virtualsteve-star/stinger-plugin.git
 cd stinger-plugin
-
-# Checkout development branch
-git checkout dev
-
-# Install dependencies and build
 npm install
+npm run build
 
-# Load in Chrome
-1. Open chrome://extensions/
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the 'dist' directory
-
-# Start development
-npm run build:watch  # Auto-rebuild on changes
+# Load the 'dist' folder in Chrome as above
 ```
+
+## Requirements
+
+- Chrome 118+ or Chromium-based browser
+- Stinger API running on `http://localhost:8888` (or configured endpoint)
+- Node.js 20+ and npm (for development only)
+
+## Usage
+
+1. **Install the extension** (see Installation above)
+2. **Start the Stinger API**:
+   ```bash
+   # In the Stinger core repository
+   python -m stinger.api
+   ```
+3. **Navigate to ChatGPT** (https://chatgpt.com)
+4. **Start chatting** - The extension will automatically:
+   - Intercept your prompts before submission
+   - Check them against security policies
+   - Show warnings or blocks for policy violations
+   - Monitor AI responses for sensitive content
+
+### Security Actions
+
+- **🟢 Allow**: Content passes all security checks
+- **🟡 Warning**: Content may violate policies - you can choose to proceed
+- **🔴 Block**: Content violates policies and cannot be submitted
 
 ## Development
 
@@ -130,21 +137,29 @@ npm run typecheck   # TypeScript checking
 └── CLAUDE.md              # AI assistant guidance
 ```
 
-## Testing the API
-
-Before using the extension, ensure the Stinger API is running:
+## Testing
 
 ```bash
-# In the Stinger core repository
-python -m stinger.api
+# Test the Stinger API connection
+node tests/test-api.js
 
-# Test the connection (in this repo)
-node test-api.js
+# Test conversation tracking
+node tests/test-conversation.js
+
+# Run all unit tests
+npm test
+
+# Run CI validation suite
+npm run ci
 ```
 
 ## Contributing
 
-This project is currently under proprietary evaluation license. External contributions are not accepted at this time.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+- Code style and standards
+- Testing requirements
+- Commit message format
+- Pull request process
 
 ## Security
 
@@ -155,16 +170,25 @@ This extension is designed with security as the primary focus:
 - Content Security Policy enforcement
 - No remote code execution
 
-## Contact
+## Support
 
-For evaluation licenses or questions about this project, please contact the repository owner.
+- 🐛 [Report Issues](https://github.com/virtualsteve-star/stinger-plugin/issues)
+- 📖 [View Documentation](docs/)
+- 💬 [Discussions](https://github.com/virtualsteve-star/stinger-plugin/discussions)
+
+## Roadmap
+
+See our [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md) for planned features:
+- 🔐 API Authentication & Authorization
+- 🧪 Comprehensive Integration Testing
+- 🔄 Advanced Retry Logic
+- 📊 Enhanced Error Reporting
+- ⚡ Performance Optimizations
 
 ## License
 
-Copyright (c) 2025 VirtualSteve-Star. All rights reserved.
-
-This software is licensed for evaluation purposes only. See [LICENSE](LICENSE) for full terms.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Note:** This extension requires the Stinger Policy API to be deployed and accessible. The API is being developed as part of the [Stinger core project](https://github.com/virtualsteve-star/stinger).
+**Built with ❤️ by the Stinger Team**
