@@ -1,305 +1,473 @@
 # Stinger Plugin Execution Plan
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Created:** 2025-07-10  
-**Status:** Ready for Review
+**Status:** Ready for Review  
+**Key Change:** Assumes Stinger API is provided by core project
 
 ---
 
 ## Executive Summary
 
-This execution plan outlines the development of the Stinger Guard Chrome Extension, which will integrate with a Stinger Policy API microservice to provide real-time security guardrails for LLM interactions. The plan is divided into 8 phases over approximately 12-16 weeks.
+This execution plan outlines the development of the Stinger Guard Chrome Extension MVP (Minimum Viable Product), which will demonstrate the ability to intercept ChatGPT traffic and route it to the Stinger Policy API for security checks and centralized audit logging. The Stinger backend handles all audit storage and SIEM integration - the plugin does NOT store audit logs locally. This proof of concept focuses on core functionality over 5 weeks, with future phases planned for enterprise features.
 
-## Key Technical Decisions
+## Key Assumptions
 
-1. **API Gap**: The Stinger core project is a Python framework, not an API service. We need to build a FastAPI wrapper around it to expose the required `/v1/check` and `/v1/rules` endpoints.
-2. **Architecture**: Chrome Extension (MV3) + FastAPI microservice + Stinger core library
-3. **Tech Stack**: TypeScript, Vite, Chrome Extension APIs, FastAPI (Python)
+1. **Stinger API Availability**: ✅ **CONFIRMED** - API is live on port 8888 with:
+   - `POST /v1/check` endpoint - expects `{text: string, tenantId?, userId?, kind?, detached?}`
+   - `GET /v1/rules` endpoint - returns guardrail configuration and version
+   - `/health` endpoint - provides API status and pipeline availability
+   - Response format: `{action: "allow"|"warn"|"block", reasons: [], warnings: [], metadata: {}}`
+   - 2-second timeout fallback to "warn" mode recommended
+
+2. **API Integration Details** (from testing):
+   - PII detection working for credit cards, SSNs
+   - Current preset: "customer_service"
+   - Detached mode available for async processing
+   - Simple guardrails active (toxicity/code checks may need AI features enabled)
+
+3. **Focus**: Pure Chrome extension client development with defined API contract
 
 ---
 
-## Phase 1: Project Setup & Infrastructure (Week 1-2)
+## Phase 1: Project Setup & Infrastructure (Week 1)
 
 ### 1.1 Repository Structure
-- [ ] Initialize npm project with TypeScript configuration
+- [ ] Initialize npm project with TypeScript 5 configuration
 - [ ] Set up Vite for Chrome extension bundling
-- [ ] Configure ESLint and Prettier
-- [ ] Set up Jest for unit testing
+- [ ] Configure ESLint and Prettier for code quality
+- [ ] Set up Jest with Chrome extension mocks
 - [ ] Configure Playwright for E2E testing
-- [ ] Create GitHub Actions workflow skeleton
+- [ ] Create GitHub Actions workflow templates
 
 ### 1.2 Chrome Extension Scaffold
-- [ ] Create manifest.json (Manifest V3)
-- [ ] Set up basic file structure:
+- [ ] Create manifest.json (Manifest V3) with initial permissions
+- [ ] Establish directory structure:
   ```
   /extension/
     manifest.json
     /src/
-      content.ts
-      background.ts
-      /utils/
-        logger.ts
-        rpc.ts
-        hash.ts
+      content/
+        index.ts
+        selectors/
+        ui/
+      background/
+        index.ts
+        api-client.ts
+        storage.ts
+      shared/
+        types.ts
+        constants.ts
+        utils/
     /assets/
       icons/
+      styles/
+    /tests/
+      unit/
+      e2e/
   ```
-- [ ] Configure Vite to build content script and background worker separately
-- [ ] Create development loading script
+- [ ] Configure Vite multi-entry build
+- [ ] Set up hot-reload for development
+- [ ] Create development load script
 
-### 1.3 Stinger API Microservice Setup
-- [ ] Create separate `/api` directory in repo
-- [ ] Set up FastAPI project structure
-- [ ] Install Stinger core as dependency
-- [ ] Create Dockerfile for API service
-- [ ] Set up local development environment
+### 1.3 Development Environment
+- [ ] Create `.env.example` for API configuration
+- [ ] Set up local Chrome profile for testing
+- [ ] Document development setup process
+- [ ] Create makefile for common tasks
 
-**Deliverables:** Working build system, loadable extension shell, API project structure
-
----
-
-## Phase 2: Stinger API Microservice Development (Week 2-3)
-
-### 2.1 Core API Endpoints
-- [ ] Implement `POST /v1/check` endpoint
-  - Request: `{tenantId, userId, kind, text}`
-  - Response: `{verdict: "allow"|"warn"|"block", reasons: [], details: {}}`
-- [ ] Implement `GET /v1/rules` endpoint
-  - Query params: `extVer`
-  - Response: Signed JSON rules
-- [ ] Add HMAC-SHA256 signing for rules
-
-### 2.2 Stinger Integration
-- [ ] Create GuardrailPipeline wrapper
-- [ ] Map extension policy format to Stinger YAML config
-- [ ] Implement tenant-specific configurations
-- [ ] Add request queuing and rate limiting
-
-### 2.3 Authentication & Security
-- [ ] Implement device certificate validation
-- [ ] Add API key authentication option
-- [ ] Configure CORS for extension requests
-- [ ] Add request logging and metrics
-
-**Deliverables:** Working API service with Stinger integration
+**Deliverables:** Working build system, loadable extension shell, development environment
 
 ---
 
-## Phase 3: Content Script Development (Week 4-5)
+## Phase 2: Content Script Core Development (Week 2-3)
 
-### 3.1 Site-Specific Selectors
-- [ ] Create selector configurations for:
-  - ChatGPT (chat.openai.com)
-  - Microsoft Copilot (copilot.microsoft.com)
-- [ ] Implement dynamic selector loading
-- [ ] Add fallback detection mechanisms
+### 2.1 Site Integration Framework
+- [ ] Create abstraction layer for multi-site support
+- [ ] Implement site-specific configurations:
+  ```typescript
+  interface SiteConfig {
+    hostname: string
+    selectors: {
+      textInput: string[]
+      sendButton: string[]
+      responseContainer: string[]
+      messageElement: string[]
+    }
+    features: {
+      streaming: boolean
+      multiModal: boolean
+    }
+  }
+  ```
 
-### 3.2 Prompt Interception
-- [ ] Detect textarea/input elements
-- [ ] Capture Enter key and button clicks
-- [ ] Implement pre-submission hook
-- [ ] Add prompt queuing mechanism
+### 2.2 ChatGPT Integration
+- [ ] Map all relevant selectors
+- [ ] Handle streaming responses
+- [ ] Support conversation context
+- [ ] Handle code blocks and formatting
 
-### 3.3 Response Monitoring
-- [ ] Set up MutationObserver for response containers
-- [ ] Detect streaming completion
-- [ ] Extract full response text
-- [ ] Handle multi-turn conversations
+### 2.3 Microsoft Copilot Integration
+- [ ] Map Copilot-specific selectors
+- [ ] Handle Bing Chat mode differences
+- [ ] Support suggested responses
+- [ ] Handle image inputs
 
-### 3.4 UI Components
-- [ ] Create toast notification system
-- [ ] Implement warning banners
-- [ ] Add block/redaction overlays
-- [ ] Style components to match host sites
+### 2.4 Prompt Interception Engine
+- [ ] Create unified event capture system
+- [ ] Implement pre-submission hooks
+- [ ] Add debouncing for real-time checks
+- [ ] Create prompt queue manager
+- [ ] Handle multi-modal inputs (text + images)
 
-**Deliverables:** Working content script with UI components
+**Deliverables:** Working prompt interception for both target sites
 
 ---
 
-## Phase 4: Background Service Worker (Week 5-6)
+## Phase 3: Response Monitoring & UI Components (Week 3-4)
 
-### 4.1 Message Handling
-- [ ] Set up message router between content script and background
-- [ ] Implement request queuing
-- [ ] Add retry logic with exponential backoff
+### 3.1 Response Detection System
+- [ ] Create intelligent MutationObserver setup
+- [ ] Implement streaming detection logic
+- [ ] Handle response completion detection
+- [ ] Support response editing scenarios
+- [ ] Extract clean text from formatted responses
 
-### 4.2 API Communication
-- [ ] Implement RPC client for Stinger API
-- [ ] Add timeout handling (2s default)
-- [ ] Implement offline queue
+### 3.2 UI Component Library
+- [ ] Design component architecture
+- [ ] Create notification system:
+  - Toast notifications
+  - Inline warnings
+  - Modal dialogs
+- [ ] Implement blocking overlays:
+  - Redaction UI
+  - Block banners
+  - Reason displays
+- [ ] Add accessibility features (ARIA, keyboard nav)
+
+### 3.3 Visual Integration
+- [ ] Create adaptive styling system
+- [ ] Match host site themes (light/dark)
+- [ ] Implement smooth animations
+- [ ] Add loading states
+- [ ] Ensure mobile responsiveness
+
+### 3.4 User Interaction Flows
+- [ ] Implement "override" workflows for warnings
+- [ ] Add "request review" for blocks
+- [ ] Create feedback mechanism
+- [ ] Handle edge cases (network errors, timeouts)
+
+**Deliverables:** Complete UI system with site-appropriate styling
+
+---
+
+## Phase 4: Background Service Worker & API Integration (Week 4-5)
+
+### 4.1 API Client Development
+- [ ] Create typed API client
+- [ ] Implement authentication:
+  - Device certificates
+  - API key fallback
+- [ ] Add request signing
+- [ ] Implement retry logic with exponential backoff
 - [ ] Add circuit breaker pattern
 
-### 4.3 Storage Management
-- [ ] Design storage schema
-- [ ] Implement audit log queue
-- [ ] Add storage quota monitoring
-- [ ] Implement log rotation
+### 4.2 Message Bus Architecture
+- [ ] Design message protocol between content ↔ background
+- [ ] Implement type-safe messaging
+- [ ] Add message queuing
+- [ ] Handle concurrent requests
+- [ ] Implement request deduplication
+
+### 4.3 State Management
+- [ ] Design storage schema:
+  ```typescript
+  interface StorageSchema {
+    config: ExtensionConfig
+    rules: PolicyRules
+    cache: ResponseCache  // Performance cache only
+    // NO auditQueue - auditing handled by backend
+  }
+  ```
+- [ ] Implement storage abstraction
+- [ ] Add migration system
+- [ ] Handle storage quota limits
 
 ### 4.4 Policy Synchronization
-- [ ] Implement rule fetching
+- [ ] Implement rule fetching with chrome.alarms
 - [ ] Add signature verification
-- [ ] Set up periodic sync (chrome.alarms)
-- [ ] Add policy caching
+- [ ] Implement diff-based updates
+- [ ] Add policy caching with TTL
+- [ ] Handle offline scenarios
 
-**Deliverables:** Complete background worker with API integration
-
----
-
-## Phase 5: Security & Compliance Features (Week 7-8)
-
-### 5.1 Audit Logging
-- [ ] Implement comprehensive event logging
-- [ ] Add SHA-256 hashing for prompts/responses
-- [ ] Create SIEM export format
-- [ ] Implement batch upload to SIEM endpoint
-
-### 5.2 Enterprise Configuration
-- [ ] Add managed storage support
-- [ ] Implement policy precedence
-- [ ] Add configuration validation
-- [ ] Create admin documentation
-
-### 5.3 Security Hardening
-- [ ] Implement CSP headers
-- [ ] Add input sanitization
-- [ ] Implement secure storage encryption
-- [ ] Add anti-tampering checks
-
-**Deliverables:** Secure, enterprise-ready extension
+**Deliverables:** Complete background worker with robust API integration
 
 ---
 
-## Phase 6: Testing & Quality Assurance (Week 9-10)
+## Phase 5: Security & Audit Features (Week 5-6)
 
-### 6.1 Unit Testing
-- [ ] Content script components (80% coverage)
-- [ ] Background worker logic (80% coverage)
+### 5.1 Audit System Integration
+- [ ] Ensure all prompts/responses are sent to Stinger API
+- [ ] Verify API audit logging is working correctly
+- [ ] Confirm no local storage of audit events
+- [ ] Test SIEM integration from backend (not plugin responsibility)
+- [ ] Document audit flow: Plugin → API → Backend Storage → SIEM
+
+### 5.2 Security Hardening
+- [ ] Implement Content Security Policy
+- [ ] Add input sanitization layer
+- [ ] Implement secure storage:
+  - Encrypt sensitive data
+  - Use crypto.subtle for hashing
+- [ ] Add tamper detection
+- [ ] Implement secure communication
+
+### 5.3 Privacy Features
+- [ ] Hash prompts/responses before storage
+- [ ] Implement data minimization
+- [ ] Add user consent flows
+- [ ] Create data retention policies
+- [ ] Implement right-to-delete
+
+### 5.4 Enterprise Features
+- [ ] Add managed policy support
+- [ ] Implement admin overrides
+- [ ] Add telemetry controls
+- [ ] Create compliance reports
+- [ ] Support proxy configurations
+
+**Deliverables:** Enterprise-ready security and compliance features
+
+---
+
+## Phase 6: Testing & Performance Optimization (Week 6-7)
+
+### 6.1 Unit Testing Suite
+- [ ] Content script components (85% coverage)
+- [ ] Background worker logic (85% coverage)
+- [ ] API client with mocks (90% coverage)
+- [ ] Storage operations (95% coverage)
 - [ ] Utility functions (100% coverage)
-- [ ] API endpoints (90% coverage)
 
 ### 6.2 Integration Testing
 - [ ] Extension ↔ API communication
-- [ ] Policy synchronization
-- [ ] Offline scenarios
-- [ ] Error recovery
+- [ ] Cross-component messaging
+- [ ] Storage synchronization
+- [ ] Error recovery scenarios
+- [ ] Multi-tab coordination
 
 ### 6.3 E2E Testing
-- [ ] ChatGPT interaction flows
-- [ ] Copilot interaction flows
-- [ ] Block/warn/allow scenarios
-- [ ] Multi-tab behavior
+- [ ] Complete user workflows:
+  - First install experience
+  - Prompt blocking scenarios
+  - Response filtering
+  - Policy updates
+- [ ] Site-specific test suites
+- [ ] Performance benchmarks
+- [ ] Memory leak detection
 
-### 6.4 Performance Testing
-- [ ] Measure prompt check latency
-- [ ] Test memory usage patterns
-- [ ] Validate DOM mutation overhead
-- [ ] Load test API service
+### 6.4 Performance Optimization
+- [ ] Minimize content script footprint
+- [ ] Optimize DOM operations
+- [ ] Implement lazy loading
+- [ ] Add request batching
+- [ ] Optimize bundle size
 
-**Deliverables:** Test suite, performance benchmarks
+**Deliverables:** Comprehensive test suite, optimized extension
 
 ---
 
-## Phase 7: CI/CD & Deployment (Week 11-12)
+## Phase 7: CI/CD & Release Engineering (Week 7-8)
 
 ### 7.1 Build Pipeline
-- [ ] GitHub Actions for PR validation
-- [ ] Automated testing on Chrome versions
-- [ ] Security scanning (OWASP ZAP, Snyk)
-- [ ] Bundle size optimization
+- [ ] GitHub Actions workflows:
+  - PR validation
+  - Nightly builds
+  - Release builds
+- [ ] Automated testing matrix (Chrome versions)
+- [ ] Code quality gates
+- [ ] Security scanning
 
 ### 7.2 Release Process
-- [ ] Extension signing automation
-- [ ] Version management
-- [ ] Release notes generation
-- [ ] Update manifest creation
+- [ ] Semantic versioning setup
+- [ ] Automated changelog generation
+- [ ] Extension packaging:
+  - Development builds
+  - Production builds
+  - Source maps handling
+- [ ] Update manifest generation
 
-### 7.3 Deployment Infrastructure
-- [ ] API service containerization
-- [ ] Kubernetes manifests / Docker Compose
-- [ ] Monitoring and alerting setup
-- [ ] Log aggregation configuration
+### 7.3 Distribution Preparation
+- [ ] Chrome Web Store assets:
+  - Screenshots
+  - Descriptions
+  - Privacy policy
+- [ ] Enterprise packaging:
+  - CRX generation
+  - Update manifest
+  - Policy templates
+- [ ] Documentation packaging
 
-**Deliverables:** Automated CI/CD pipeline, deployment artifacts
+### 7.4 Monitoring Setup
+- [ ] Error tracking integration
+- [ ] Performance monitoring
+- [ ] Usage analytics (privacy-compliant)
+- [ ] Update adoption tracking
+
+**Deliverables:** Complete CI/CD pipeline, release artifacts
 
 ---
 
-## Phase 8: Documentation & Rollout (Week 13-14)
+## Phase 8: Documentation & Pilot Program (Week 8-10)
 
-### 8.1 User Documentation
-- [ ] Installation guide
-- [ ] User manual
+### 8.1 End User Documentation
+- [ ] Quick start guide
+- [ ] Feature overview
 - [ ] Troubleshooting guide
-- [ ] FAQ
+- [ ] Privacy information
+- [ ] Video tutorials
 
-### 8.2 Administrator Documentation
-- [ ] Deployment guide
-- [ ] Policy configuration manual
-- [ ] SIEM integration guide
+### 8.2 IT Administrator Guide
+- [ ] Deployment options
+- [ ] Policy configuration
+- [ ] Management console guide
 - [ ] Security best practices
+- [ ] Integration guides
 
 ### 8.3 Developer Documentation
-- [ ] API reference
-- [ ] Extension architecture
+- [ ] Architecture overview
+- [ ] API integration guide
+- [ ] Extension customization
 - [ ] Contributing guidelines
-- [ ] Development setup
+- [ ] Testing guide
 
-### 8.4 Pilot Rollout
-- [ ] Deploy to 25-user canary group
-- [ ] Monitor metrics and feedback
-- [ ] Address critical issues
-- [ ] Plan phased rollout
+### 8.4 Pilot Program
+- [ ] Recruit 25-50 pilot users
+- [ ] Deploy canary version
+- [ ] Implement feedback collection
+- [ ] Daily metric reviews
+- [ ] Issue triage process
+- [ ] Iterate based on feedback
 
-**Deliverables:** Complete documentation, pilot deployment
+**Deliverables:** Complete documentation suite, successful pilot
 
 ---
 
-## Risk Mitigation
+## Critical Dependencies
+
+### On Stinger Core Team:
+1. **API Endpoints** ready by Week 3
+2. **API Documentation** complete
+3. **Test environment** available
+4. **Support channel** established
+
+### External Dependencies:
+1. **Chrome Web Store** developer account
+2. **Code signing certificate**
+3. **SIEM integration endpoints**
+4. **Test user accounts** for target sites
+
+---
+
+## Risk Management
 
 ### Technical Risks
-1. **Chrome API Changes**: Stay on stable APIs, avoid experimental features
-2. **Site Selector Breakage**: Implement multiple fallback mechanisms
-3. **Performance Impact**: Aggressive optimization, caching, and lazy loading
-
-### Security Risks
-1. **API Key Exposure**: Use secure storage, never log sensitive data
-2. **Policy Bypass**: Multiple validation layers, fail-secure defaults
-3. **Data Leakage**: Hash sensitive content, minimal data retention
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Site selector changes | High | Multiple selector strategies, quick update mechanism |
+| API latency issues | Medium | Aggressive timeouts, offline mode |
+| Chrome API changes | Medium | Stay on stable APIs, version detection |
 
 ### Operational Risks
-1. **API Downtime**: Offline mode with cached policies
-2. **Scale Issues**: Horizontal scaling, rate limiting
-3. **Update Failures**: Gradual rollout, version compatibility checks
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Pilot user issues | Medium | Daily monitoring, quick fix process |
+| Update distribution | Low | Gradual rollout, rollback plan |
+| Support volume | Medium | Comprehensive docs, FAQ |
 
 ---
 
-## Success Metrics
+## MVP Success Metrics
 
-1. **Performance**
-   - Prompt check latency p95 < 250ms
-   - Zero perceived lag for users
-   - Memory footprint < 15MB
+### Core Functionality
+- 100% prompt/response capture rate on ChatGPT
+- Successfully sends all traffic to Stinger API
+- Basic allow/warn/block actions work correctly
+- Audit log entries created for all interactions
 
-2. **Security**
-   - 100% policy enforcement
-   - Zero false negatives for configured rules
-   - Complete audit trail
+### Performance (MVP Targets)
+- Check latency < 500ms (relaxed for MVP)
+- No noticeable lag on ChatGPT
+- Memory usage < 50MB
+- Extension loads in < 2 seconds
 
-3. **Adoption**
-   - 95% successful installations
-   - < 1% uninstall rate
-   - Positive user feedback
+### Demo Readiness
+- Zero critical bugs in demo scenarios
+- Clear value proposition demonstrated
+- Stakeholder buy-in for full version
+- Path to production defined
+
+---
+
+## Timeline Summary
+
+### MVP Phase (5 weeks)
+```
+Week 1: Phase 1 - Project Setup & Infrastructure
+Week 2: Phase 2 - Core Infrastructure & Architecture  
+Week 3: Phase 3 - Content Script Development (ChatGPT only)
+Week 4: Phase 4 - Background Worker & API Integration
+Week 5: Phase 5 - Testing & Demo Preparation
+```
+
+### Future Phases (Post-MVP)
+```
+Phase 6: Multi-site Support (Copilot, Claude, etc.)
+Phase 7: Enterprise Features (Policy management, SIEM integration)
+Phase 8: Security Hardening & Performance
+Phase 9: Production Release & Deployment
+```
+
+## MVP Phase Plans
+
+Each phase has its own detailed implementation and testing plan:
+
+1. [Phase 1: Project Setup & Infrastructure](phase-1-setup.md)
+2. [Phase 2: Core Infrastructure & Architecture](phase-2-infrastructure.md)
+3. [Phase 3: Content Script Development](phase-3-content-script.md)
+4. [Phase 4: Background Worker & API Integration](phase-4-background-api.md)
+5. [Phase 5: Testing & Demo Preparation](phase-5-testing-demo.md)
+
+## MVP Scope
+
+### In Scope
+- ChatGPT prompt/response interception
+- Basic allow/warn/block functionality
+- Audit logging via Stinger API
+- Simple UI feedback
+- Proof of concept demonstration
+
+### Out of Scope (Future)
+- Multi-site support beyond ChatGPT
+- Advanced enterprise features
+- SIEM direct integration
+- Offline mode
+- Performance optimizations
+- Complex policy management
 
 ---
 
 ## Next Steps
 
-1. Review and approve execution plan
+1. Confirm API timeline with core team
 2. Set up development environment
 3. Begin Phase 1 implementation
-4. Schedule weekly progress reviews
-5. Establish communication channels
+4. Establish weekly sync meetings
+5. Create shared communication channel
 
 ---
 
-**Prepared by:** Development Team  
-**Review Required by:** Security, Architecture, Product teams
+**Prepared by:** Extension Development Team  
+**Dependencies:** Stinger Core API Team  
+**Review Required:** Security, Product, UX Teams
