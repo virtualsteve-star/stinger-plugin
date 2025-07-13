@@ -40,15 +40,24 @@ export class StingerClient {
     try {
       // Validate input
       if (!request.text || typeof request.text !== 'string') {
-        return { success: false, error: { message: 'Invalid text content', code: 'INVALID_INPUT' } };
+        return {
+          success: false,
+          error: { message: 'Invalid text content', code: 'INVALID_INPUT' },
+        };
       }
-      
+
       if (request.text.length > API_CONFIG.MAX_TEXT_LENGTH) {
-        return { success: false, error: { message: 'Text content too large', code: 'TEXT_TOO_LARGE' } };
+        return {
+          success: false,
+          error: { message: 'Text content too large', code: 'TEXT_TOO_LARGE' },
+        };
       }
 
       if (!request.tenantId || !request.userId) {
-        return { success: false, error: { message: 'Missing required tenant or user ID', code: 'MISSING_IDS' } };
+        return {
+          success: false,
+          error: { message: 'Missing required tenant or user ID', code: 'MISSING_IDS' },
+        };
       }
 
       // Check cache first for identical requests
