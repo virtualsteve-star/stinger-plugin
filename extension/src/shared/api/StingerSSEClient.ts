@@ -134,6 +134,10 @@ export class StingerSSEClient {
               const data = JSON.parse(line.slice(6)) as SSEEvent;
               this.processSSEEvent(data, result);
             } catch (e) {
+              // Re-throw stream_error events
+              if (e instanceof Error && e.message.startsWith('Stream error:')) {
+                throw e;
+              }
               logger.warn('Failed to parse SSE data:', e);
             }
           }

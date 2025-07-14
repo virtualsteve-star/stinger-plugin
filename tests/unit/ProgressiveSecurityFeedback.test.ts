@@ -2,6 +2,8 @@
  * Unit tests for ProgressiveSecurityFeedback
  */
 
+// Import mocks before the component
+import { mockSetTimeout, mockClearTimeout, resetTimerMocks, getTimeoutCallbacks } from './setup/progressiveFeedbackMocks';
 import { ProgressiveSecurityFeedback } from '../../extension/src/content/ui/ProgressiveSecurityFeedback';
 import type { GuardrailResult } from '../../extension/src/shared/api/StingerSSEClient';
 
@@ -29,32 +31,16 @@ global.document = {
   },
 } as any;
 
-// Mock window timers
-let timeoutCallbacks: { [key: number]: () => void } = {};
-let timeoutId = 1;
+// Get access to timeout callbacks for testing
+let timeoutCallbacks = getTimeoutCallbacks();
 
-const mockSetTimeout = jest.fn((callback: () => void, delay: number) => {
-  const id = timeoutId++;
-  timeoutCallbacks[id] = callback;
-  return id;
-});
-
-const mockClearTimeout = jest.fn((id: number) => {
-  delete timeoutCallbacks[id];
-});
-
-global.window = {
-  setTimeout: mockSetTimeout,
-  clearTimeout: mockClearTimeout,
-} as any;
-
-describe.skip('ProgressiveSecurityFeedback', () => {
+describe('ProgressiveSecurityFeedback', () => {
   let feedback: ProgressiveSecurityFeedback;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    timeoutCallbacks = {};
-    timeoutId = 1;
+    resetTimerMocks();
+    timeoutCallbacks = getTimeoutCallbacks();
     feedback = new ProgressiveSecurityFeedback({
       progressTimeout: 500,
       hideDelay: 2000,

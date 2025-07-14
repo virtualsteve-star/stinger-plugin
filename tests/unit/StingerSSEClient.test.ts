@@ -4,12 +4,11 @@
 
 import { StingerSSEClient } from '../../extension/src/shared/api/StingerSSEClient';
 import type { GuardrailResult, SSEAnalysisResult } from '../../extension/src/shared/api/StingerSSEClient';
-import { TextEncoder } from 'util';
+import { TextEncoder, TextDecoder } from 'util';
 
-// Polyfill TextEncoder for Node.js environment
+// Polyfill TextEncoder and TextDecoder for Node.js environment
 global.TextEncoder = TextEncoder as any;
-
-// TODO: Fix TextDecoder polyfill for CI environment
+global.TextDecoder = TextDecoder as any;
 
 // Mock fetch and ReadableStream
 global.fetch = jest.fn();
@@ -30,7 +29,7 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-describe.skip('StingerSSEClient', () => {
+describe('StingerSSEClient', () => {
   let client: StingerSSEClient;
 
   beforeEach(() => {
@@ -257,20 +256,20 @@ describe.skip('StingerSSEClient', () => {
   });
 
   describe('configuration', () => {
-    it('should update configuration', () => {
+    it('should update configuration', async () => {
       client.updateConfig({
         baseUrl: 'https://new-api.example.com',
         timeout: 15000,
       });
 
       // Verify by attempting a request with the new config
-      const mockBody = createMockReadableStream([]);
+      const mockBody = createMockReadableStream(['data: {"type":"stream_complete"}\n\n']);
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         body: mockBody,
       });
 
-      client.analyzeWithStreaming('test').catch(() => {});
+      await client.analyzeWithStreaming('test');
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://new-api.example.com/api/v1/stream/analyze',
@@ -280,7 +279,7 @@ describe.skip('StingerSSEClient', () => {
   });
 
   describe('context detection', () => {
-    it('should detect different contexts', () => {
+    it('should detect different contexts', async () => {
       // Test ChatGPT context
       Object.defineProperty(window.location, 'hostname', {
         value: 'chatgpt.com',
@@ -288,13 +287,13 @@ describe.skip('StingerSSEClient', () => {
       });
       
       let testClient = new StingerSSEClient();
-      const mockBody = createMockReadableStream([]);
+      const mockBody = createMockReadableStream(['data: {"type":"stream_complete"}\n\n']);
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         body: mockBody,
       });
 
-      testClient.analyzeWithStreaming('test').catch(() => {});
+      await testClient.analyzeWithStreaming('test');
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
@@ -313,12 +312,13 @@ describe.skip('StingerSSEClient', () => {
       });
       
       testClient = new StingerSSEClient();
+      const mockBody2 = createMockReadableStream(['data: {"type":"stream_complete"}\n\n']);
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
-        body: mockBody,
+        body: mockBody2,
       });
 
-      testClient.analyzeWithStreaming('test').catch(() => {});
+      await testClient.analyzeWithStreaming('test');
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),

@@ -24,10 +24,10 @@ This document tracks technical debt items that need to be addressed post-release
    - Console error spy not capturing logs correctly
    - Cleanup test timing out at 1000ms
 
-4. **SSE Streaming Tests**: TextDecoder polyfill and mock timing issues
-   - TextDecoder not available in Node.js test environment
-   - Mock setTimeout not being captured properly in tests
-   - 65 tests currently skipped (StingerSSEClient and ProgressiveSecurityFeedback)
+4. **SSE Streaming Tests**: DOM mocking issues (PARTIALLY FIXED)
+   - ✅ TextDecoder polyfill fixed for StingerSSEClient (19 tests passing)
+   - ❌ Mock DOM/timers complex for ProgressiveSecurityFeedback (18 tests still skipped)
+   - Need proper JSDOM setup for DOM manipulation tests
 
 **Root Cause**: Tests were written early in development and became stale as implementation evolved. Test mocking strategy needs overhaul. SSE tests need proper polyfills for Node.js environment.
 
