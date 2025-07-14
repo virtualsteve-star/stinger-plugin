@@ -2,6 +2,16 @@
 
 This document summarizes all Request for Enhancement (RFE) issues filed for the Stinger Chrome Extension post-release roadmap.
 
+## 🚨 **ROADMAP UPDATE: SSE Streaming Integration Priority**
+
+**⚡ NEW TOP PRIORITY**: SSE Streaming Integration (1-2 weeks)
+- **Rationale**: 20x UX improvement opportunity with all blockers resolved
+- **Impact**: Industry-leading real-time streaming security feedback
+- **Status**: All architectural concerns addressed by Core Engineering team
+- **Implementation**: See `/docs/plans/SSE_STREAMING_INTEGRATION_PLAN.md`
+
+**Previous RFE priorities remain valid but are deprioritized for streaming integration.**
+
 ## 📋 **Filed RFEs Overview**
 
 | Issue # | Title | Priority | Effort | Category |
@@ -51,12 +61,19 @@ This document summarizes all Request for Enhancement (RFE) issues filed for the 
 - Multi-level caching strategy
 - Cache performance analytics
 
-## 📅 **Recommended Implementation Order**
+## 📅 **Updated Implementation Order (Post-Streaming)**
 
-### Phase 1: Foundation (Sprint 1)
+### Phase 0: SSE Streaming Integration (NEW PRIORITY)
+**⚡ SSE Streaming Integration** (1-2 weeks)
+   - **Impact**: 20x UX improvement (instant vs 3-5s feedback)
+   - **Status**: All blockers resolved by Core Engineering
+   - **Architecture**: Content script direct SSE (recommended)
+   - **Deliverable**: v0.2.0 with real-time streaming security
+
+### Phase 1: Foundation (Sprint 1 - Post Streaming)
 1. **Issue #4: API Authentication** (5-7 days)
    - Critical security requirement
-   - Blocks other features that depend on secure API
+   - Enhanced for streaming authentication
    - Requires backend coordination
 
 ### Phase 2: Quality & Reliability (Sprint 2)  
@@ -155,4 +172,5 @@ graph TD
 **Total RFEs Filed**: 5  
 **Total Estimated Effort**: 21-29 days  
 **Critical Path**: API Auth → Testing Framework → Performance Features  
+**Current Priority**: SSE Streaming Integration (1-2 weeks)  
 **Next Priority**: Issue #4 (API Authentication and Authorization)

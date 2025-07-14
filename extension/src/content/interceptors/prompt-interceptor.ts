@@ -6,6 +6,8 @@ import { MessageBus } from '../../shared/messaging/MessageBus';
 import { loggers } from '../../shared/logging/Logger';
 import { getPromptInput, getSubmitButton } from '../selectors/chatgpt';
 import { StingerOverlay } from '../ui/overlay';
+import { ProgressiveSecurityFeedback } from '../ui/ProgressiveSecurityFeedback';
+import { StingerSSEClient } from '../../shared/api/StingerSSEClient';
 import { UI_CONFIG, SECURITY_CONFIG } from '../../shared/constants';
 import type { CheckPromptMessage, CheckResultMessage } from '../../shared/types/messages';
 
@@ -18,14 +20,19 @@ export class PromptInterceptor {
   private submitButton: HTMLButtonElement | null = null;
   private promptInput: HTMLTextAreaElement | HTMLElement | null = null;
   private overlay: StingerOverlay;
+  private progressFeedback: ProgressiveSecurityFeedback;
+  private sseClient: StingerSSEClient;
   private interceptedElements = new WeakSet<Element>();
   private lastKnownValue = '';
   private intervalId: number | null = null;
   private mutationObserver: MutationObserver | null = null;
+  private streamingEnabled = true;
 
   constructor(messageBus: MessageBus) {
     this.messageBus = messageBus;
     this.overlay = new StingerOverlay();
+    this.progressFeedback = new ProgressiveSecurityFeedback();
+    this.sseClient = new StingerSSEClient();
   }
 
   /**
@@ -94,6 +101,17 @@ export class PromptInterceptor {
       this.mutationObserver.disconnect();
       this.mutationObserver = null;
     }
+
+    // Clean up progress feedback
+    this.progressFeedback.cleanup();
+  }
+
+  /**
+   * Enable or disable streaming mode
+   */
+  setStreamingEnabled(enabled: boolean): void {
+    this.streamingEnabled = enabled;
+    logger.info('Streaming mode:', enabled ? 'enabled' : 'disabled');
   }
 
   /**
@@ -301,49 +319,11 @@ export class PromptInterceptor {
     try {
       logger.info('Checking prompt:', promptText.substring(0, 50) + '...');
 
-      // Send prompt to background for checking
-      const message: Omit<CheckPromptMessage, 'id' | 'timestamp'> = {
-        type: 'CHECK_PROMPT',
-        payload: {
-          text: promptText,
-          metadata: {
-            conversationId: `session-${Date.now()}`,
-            messageId: `msg-${Date.now()}`,
-          },
-        },
-      };
-
-      // Wait for check result
-      const resultPromise = this.waitForCheckResult();
-      await this.messageBus.send(message);
-      const result = await resultPromise;
-
-      logger.info('Check result:', result.action);
-
-      // Handle the result
-      switch (result.action) {
-        case 'allow':
-          // Submit the prompt
-          this.submitPrompt();
-          break;
-
-        case 'warn': {
-          // Show warning but allow submission
-          const proceed = await this.showWarning(result.warnings || []);
-          if (proceed) {
-            this.submitPrompt();
-          }
-          break;
-        }
-
-        case 'block':
-          // Block submission
-          await this.showBlockMessage(result.reasons || []);
-          // Clear the input
-          if (this.promptInput) {
-            this.setInputValue(this.promptInput, '');
-          }
-          break;
+      // Try streaming analysis first, fallback to batch if needed
+      if (this.streamingEnabled && StingerSSEClient.isSupported()) {
+        await this.analyzeWithStreaming(promptText);
+      } else {
+        await this.analyzeWithBatch(promptText);
       }
     } catch (error) {
       logger.error('Error checking prompt:', error);
@@ -352,6 +332,98 @@ export class PromptInterceptor {
     } finally {
       this.isCheckingPrompt = false;
       this.setSubmitButtonState('ready');
+    }
+  }
+
+  /**
+   * Analyze with streaming SSE
+   */
+  private async analyzeWithStreaming(promptText: string): Promise<void> {
+    try {
+      logger.info('Starting streaming analysis');
+
+      // Start progress indication
+      this.progressFeedback.startSecurityCheck();
+
+      // Perform streaming analysis
+      const result = await this.sseClient.analyzeWithStreaming(promptText);
+
+      // Process guardrail results progressively
+      for (const guardrailResult of result.guardrailResults) {
+        this.progressFeedback.handleGuardrailResult(guardrailResult);
+      }
+
+      // Complete security check
+      this.progressFeedback.completeSecurityCheck(result.blocked, result.warnings);
+
+      // Handle final result
+      this.handleAnalysisResult(result.blocked, result.warnings, result.reasons);
+    } catch (error) {
+      logger.warn('Streaming analysis failed, falling back to batch:', error);
+      this.progressFeedback.handleStreamError(
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+
+      // Fallback to batch mode
+      await this.analyzeWithBatch(promptText);
+    }
+  }
+
+  /**
+   * Analyze with batch API (fallback)
+   */
+  private async analyzeWithBatch(promptText: string): Promise<void> {
+    // Send prompt to background for checking
+    const message: Omit<CheckPromptMessage, 'id' | 'timestamp'> = {
+      type: 'CHECK_PROMPT',
+      payload: {
+        text: promptText,
+        metadata: {
+          conversationId: `session-${Date.now()}`,
+          messageId: `msg-${Date.now()}`,
+        },
+      },
+    };
+
+    // Wait for check result
+    const resultPromise = this.waitForCheckResult();
+    await this.messageBus.send(message);
+    const result = await resultPromise;
+
+    logger.info('Batch check result:', result.action);
+
+    // Handle the result
+    const blocked = result.action === 'block';
+    const warnings = result.warnings || [];
+    const reasons = result.reasons || [];
+
+    this.handleAnalysisResult(blocked, warnings, reasons);
+  }
+
+  /**
+   * Handle analysis result (both streaming and batch)
+   */
+  private async handleAnalysisResult(
+    blocked: boolean,
+    warnings: string[],
+    reasons: string[],
+  ): Promise<void> {
+    if (blocked) {
+      // Block submission
+      await this.showBlockMessage(reasons);
+      // Clear the input
+      if (this.promptInput) {
+        this.setInputValue(this.promptInput, '');
+      }
+    } else if (warnings.length > 0) {
+      // Show warning but allow submission
+      const proceed = await this.showWarning(warnings);
+      if (proceed) {
+        this.submitPrompt();
+      }
+    } else {
+      // Allow submission
+      this.submitPrompt();
     }
   }
 
