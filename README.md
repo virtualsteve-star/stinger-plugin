@@ -1,45 +1,62 @@
 # Stinger Guard Chrome Extension
 
 [![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.0--a1-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0--preview-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
 [![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.1.0a3-brightgreen)](https://github.com/virtualsteve-star/stinger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms.
+A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms. Now featuring **instant streaming security feedback** with <100ms response times!
 
-## 🚀 Alpha Release v0.1.0-a1
+## 🚀 Preview Release v0.2.0 - SSE Streaming Integration
 
-The Stinger Guard Chrome Extension is now available as an alpha release! This MVP provides core functionality for intercepting and checking prompts on ChatGPT with the Stinger API.
+**⚡ NEW: Real-time streaming security feedback!** Experience instant security analysis with our SSE (Server-Sent Events) integration, delivering <100ms first response times - a **20x improvement** over batch processing.
 
 ## Overview
 
 Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces security policies for prompts and responses on LLM interfaces like ChatGPT and Microsoft Copilot. It integrates with the [Stinger](https://github.com/virtualsteve-star/stinger) policy engine to prevent sensitive data leakage and enforce enterprise security policies.
 
-### Key Features (v0.1.0-a1)
+### Key Features (v0.2.0-preview)
 
+- 🆕 **SSE Streaming Integration** - Real-time progressive security feedback with <100ms first response
+- 🆕 **Instant Pattern Detection** - FAST guardrails provide immediate feedback for known patterns
+- 🆕 **Progressive Security Analysis** - See security checks happen in real-time with transparency
 - ✅ **Prompt Interception** - Captures prompts before submission on ChatGPT (Enter key & Submit button)
 - ✅ **Real-time Security Checks** - Validates content against Stinger API guardrails
-- ✅ **User Interface** - Shows warnings/blocks with allow/deny options
+- ✅ **User Interface** - Shows warnings/blocks with progressive "🛡️ Security scanning..." indicators
 - ✅ **Conversation Tracking** - Tracks participant types (human/bot/agent/ai_model)
 - ✅ **Response Monitoring** - Checks AI responses for policy violations
 - ✅ **Audit Logging** - All security events logged to Stinger backend
+- ✅ **Graceful Fallback** - Automatic degradation to batch mode if streaming unavailable
+
+### What's New in v0.2.0
+
+#### ⚡ SSE Streaming Performance
+- **20x faster** first feedback (100ms vs 3-5 seconds)
+- **Progressive transparency** - watch security analysis happen
+- **No blocking delays** - instant pattern detection
+- **Industry-leading UX** - transforms security from "blocking" to "enabling"
 
 ### Coming Soon
 - 🔜 API Authentication (Issue #4)
 - 🔜 Enhanced retry logic (Issue #3)
 - 🔜 Advanced error reporting (Issue #5)
-- 🔜 Performance optimizations (Issue #6)
+- 🔜 LRU Cache optimization (Issue #6)
+- 🔜 Comprehensive integration testing (Issue #7)
 
 ## Architecture
 
 ```
 ┌────────────────────┐            ┌───────────────────────────────┐
 │   Content Script   │──────────▶│  Background Service Worker    │
-│ (UI interception)  │  message  │  (policy RPC & logging)       │
-└─────────┬──────────┘            └──────────────┬────────────────┘
-          │DOM mut.                         HTTPS│
-          ▼                                      ▼
- Web page (ChatGPT)        Stinger Policy API  ➜  Enterprise microservice
+│ (UI interception)  │  message  │  (config & storage)           │
+│        +           │            └───────────────────────────────┘
+│  SSE Streaming     │                          
+│    Connection      │◀──────────────SSE────────────────────────────┐
+└─────────┬──────────┘                                              │
+          │DOM mut.                                                 │
+          ▼                                                         ▼
+ Web page (ChatGPT)              Stinger SSE API  ➜  Real-time Analysis
+                               (/api/v1/stream/analyze)
 ```
 
 ## Documentation
@@ -50,6 +67,8 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md)
+- [SSE Streaming Integration Plan](docs/plans/SSE_STREAMING_INTEGRATION_PLAN.md)
+- [Performance Validation Report](docs/SSE_PERFORMANCE_VALIDATION.md)
 
 ## Installation
 
@@ -73,8 +92,9 @@ npm run build
 
 ## Requirements
 
-- Chrome 118+ or Chromium-based browser
-- Stinger API running on `http://localhost:8888` (or configured endpoint)
+- Chrome 118+ or Chromium-based browser (SSE streaming requires Chrome 90+)
+- Stinger API v0.1.0a3+ with SSE endpoint support
+- API running on `http://localhost:8888` (or configured endpoint)
 - Node.js 20+ and npm (for development only)
 
 ## Usage
@@ -92,11 +112,17 @@ npm run build
    - Show warnings or blocks for policy violations
    - Monitor AI responses for sensitive content
 
-### Security Actions
+### Security Feedback Experience
 
-- **🟢 Allow**: Content passes all security checks
-- **🟡 Warning**: Content may violate policies - you can choose to proceed
-- **🔴 Block**: Content violates policies and cannot be submitted
+#### Instant Pattern Detection (<100ms)
+- **🟢 Allow**: Content instantly passes pattern checks
+- **🟡 Warning**: Quick detection of potential issues with option to proceed
+- **🔴 Block**: Immediate blocking of known policy violations
+
+#### Progressive Analysis
+- **🛡️ Security scanning...**: Shown after 500ms for complex analysis
+- **Real-time updates**: See each security check as it completes
+- **Transparent process**: No more "black box" waiting
 
 ## Development
 
@@ -178,12 +204,18 @@ This extension is designed with security as the primary focus:
 
 ## Roadmap
 
+### ✅ Recently Completed
+- ⚡ **SSE Streaming Integration** - Real-time security feedback (v0.2.0)
+- 🚀 **20x Performance Improvement** - <100ms first response
+- 🎯 **Progressive UI Feedback** - Transparent security analysis
+
+### 🔜 Next Priorities
 See our [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md) for planned features:
-- 🔐 API Authentication & Authorization
-- 🧪 Comprehensive Integration Testing
-- 🔄 Advanced Retry Logic
-- 📊 Enhanced Error Reporting
-- ⚡ Performance Optimizations
+- 🔐 API Authentication & Authorization (Issue #4)
+- 🧪 Comprehensive Integration Testing (Issue #7)
+- 🔄 Advanced Retry Logic (Issue #3)
+- 📊 Enhanced Error Reporting (Issue #5)
+- ⚡ LRU Cache Optimizations (Issue #6)
 
 ## License
 
