@@ -31,7 +31,7 @@ export class ProgressiveSecurityFeedback {
    * Start security check with progress indication
    */
   startSecurityCheck(): void {
-    logger.debug('Starting security check with progress indication');
+    // Removed debug log for production
 
     // Clear any existing timers
     this.cleanup();
@@ -46,12 +46,7 @@ export class ProgressiveSecurityFeedback {
    * Handle guardrail result
    */
   handleGuardrailResult(result: GuardrailResult): void {
-    logger.debug('Handling guardrail result:', {
-      guardrail: result.guardrail_id,
-      performance: result.performance_class,
-      action: result.result.action,
-      time: result.processing_time_ms,
-    });
+    // Removed debug log for production
 
     if (result.performance_class === 'FAST') {
       this.showInstantResult(result);
@@ -205,7 +200,7 @@ export class ProgressiveSecurityFeedback {
    * Complete security check
    */
   completeSecurityCheck(blocked: boolean, warnings: string[] = []): void {
-    logger.debug('Security check complete:', { blocked, warnings: warnings.length });
+    // Removed debug log for production
 
     // Clear progress timer
     if (this.progressTimer) {

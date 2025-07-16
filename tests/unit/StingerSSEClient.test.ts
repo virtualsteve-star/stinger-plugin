@@ -111,7 +111,7 @@ describe('StingerSSEClient', () => {
       await client.analyzeWithStreaming('test prompt');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/stream/analyze',
+        'http://localhost:8000/stream/analyze',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -120,7 +120,11 @@ describe('StingerSSEClient', () => {
             'X-Extension-Version': '0.1.0-test',
             'X-User-Context': 'chatgpt',
           }),
-          body: JSON.stringify({ content: 'test prompt' }),
+          body: JSON.stringify({ 
+            content: 'test prompt',
+            preset: 'balanced',
+            context_type: 'response'
+          }),
         }),
       );
     });
@@ -181,6 +185,26 @@ describe('StingerSSEClient', () => {
 
       expect(result.blocked).toBe(false);
       expect(result.warnings).toContain('Potentially inappropriate content');
+    });
+
+    it('should handle guardrail_batch events', async () => {
+      const mockEvents = [
+        'data: {"type":"guardrail_batch","results":[{"type":"guardrail_result","guardrail_id":"keyword_block","performance_class":"FAST","result":{"action":"allow","blocked":false,"confidence":1.0,"reason":""},"timestamp":"2024-01-01T00:00:00Z","processing_time_ms":5},{"type":"guardrail_result","guardrail_id":"regex_filter","performance_class":"FAST","result":{"action":"warn","blocked":false,"confidence":0.8,"reason":"Pattern detected"},"timestamp":"2024-01-01T00:00:01Z","processing_time_ms":7}]}\n\n',
+        'data: {"type":"stream_complete"}\n\n',
+      ];
+
+      const mockBody = createMockReadableStream(mockEvents);
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        body: mockBody,
+      });
+
+      const result = await client.analyzeWithStreaming('test');
+
+      expect(result.guardrailResults).toHaveLength(2);
+      expect(result.guardrailResults[0].guardrail_id).toBe('keyword_block');
+      expect(result.guardrailResults[1].guardrail_id).toBe('regex_filter');
+      expect(result.warnings).toContain('Pattern detected');
     });
 
     it('should handle input_blocked events', async () => {
@@ -272,7 +296,7 @@ describe('StingerSSEClient', () => {
       await client.analyzeWithStreaming('test');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://new-api.example.com/api/v1/stream/analyze',
+        'https://new-api.example.com/stream/analyze',
         expect.any(Object),
       );
     });

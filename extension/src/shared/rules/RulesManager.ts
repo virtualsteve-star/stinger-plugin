@@ -75,7 +75,6 @@ export class RulesManager {
     return age < this.SYNC_INTERVAL;
   }
 
-
   /**
    * Force immediate rule sync
    */

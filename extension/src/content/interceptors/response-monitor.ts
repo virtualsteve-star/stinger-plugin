@@ -80,7 +80,7 @@ export class ResponseMonitor {
     this.lastCheckedResponse = text;
 
     try {
-      logger.info('Checking response:', text.substring(0, 50) + '...');
+      // Removed info log for production
 
       // Send response to background for checking
       const message: Omit<CheckResponseMessage, 'id' | 'timestamp'> = {
@@ -100,7 +100,7 @@ export class ResponseMonitor {
       await this.messageBus.send(message);
       const result = await resultPromise;
 
-      logger.info('Response check result:', result.action);
+      // Removed info log for production
 
       // Handle the result
       switch (result.action) {

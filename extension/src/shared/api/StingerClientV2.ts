@@ -62,7 +62,7 @@ export class StingerClientV2 {
       }
 
       const result: Phase15Response = await response.json();
-      
+
       logger.debug('Guardrail check result:', {
         action: result.action,
         mode: request.mode,
@@ -73,7 +73,7 @@ export class StingerClientV2 {
       return result;
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           logger.warn('API request timed out, failing open');
@@ -83,7 +83,7 @@ export class StingerClientV2 {
           logger.error('API error:', error);
         }
       }
-      
+
       // Fail open for availability
       return {
         action: 'allow',
@@ -106,9 +106,11 @@ export class StingerClientV2 {
       kind: 'prompt',
       mode: 'default', // Full protection for user input
       preset: 'demo_showcase',
-      context: conversationId ? {
-        conversation_id: conversationId,
-      } : undefined,
+      context: conversationId
+        ? {
+            conversation_id: conversationId,
+          }
+        : undefined,
     });
 
     return this.convertToCheckResponse(result);
@@ -123,9 +125,11 @@ export class StingerClientV2 {
       kind: 'response',
       mode: 'streaming_final', // Full check on complete response
       preset: 'demo_showcase',
-      context: conversationId ? {
-        conversation_id: conversationId,
-      } : undefined,
+      context: conversationId
+        ? {
+            conversation_id: conversationId,
+          }
+        : undefined,
     });
 
     return this.convertToCheckResponse(result);
@@ -139,11 +143,11 @@ export class StingerClientV2 {
       const response = await fetch(`${this.baseUrl}/health`, {
         signal: AbortSignal.timeout(2000),
       });
-      
+
       if (!response.ok) {
         return false;
       }
-      
+
       const data = await response.json();
       return data.status === 'healthy';
     } catch {

@@ -96,7 +96,7 @@ export class StingerOverlay {
       font-family: -apple-system, system-ui, sans-serif;
       animation: slideIn 0.3s ease-out;
     `;
-    
+
     toast.innerHTML = `
       <div style="display: flex; align-items: center;">
         <span style="font-size: 20px; margin-right: 12px;">🚫</span>
@@ -106,9 +106,9 @@ export class StingerOverlay {
         </div>
       </div>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
       toast.remove();

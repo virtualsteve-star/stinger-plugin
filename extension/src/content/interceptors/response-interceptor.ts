@@ -23,11 +23,11 @@ export class ResponseInterceptor {
    */
   start(): void {
     if (this.isMonitoring) {
-      logger.debug('Response interceptor already monitoring');
+      // Removed debug log for production
       return;
     }
 
-    logger.info('Starting response interceptor');
+    // Removed info log for production
     this.isMonitoring = true;
 
     // Watch for new assistant messages
@@ -40,7 +40,7 @@ export class ResponseInterceptor {
   stop(): void {
     if (!this.isMonitoring) return;
 
-    logger.info('Stopping response interceptor');
+    // Removed info log for production
     this.isMonitoring = false;
 
     if (this.mutationObserver) {
@@ -76,7 +76,7 @@ export class ResponseInterceptor {
       subtree: true,
     });
 
-    logger.info('Mutation observer started for chat container');
+    // Removed info log for production
   }
 
   /**
@@ -84,12 +84,7 @@ export class ResponseInterceptor {
    */
   private findChatContainer(): Element | null {
     // Try different selectors for ChatGPT
-    const selectors = [
-      'main',
-      '[class*="conversation"]',
-      '[class*="chat"]',
-      '[role="main"]',
-    ];
+    const selectors = ['main', '[class*="conversation"]', '[class*="chat"]', '[role="main"]'];
 
     for (const selector of selectors) {
       const element = document.querySelector(selector);
@@ -111,7 +106,7 @@ export class ResponseInterceptor {
     }
 
     // Look for assistant message indicators
-    const isAssistantMessage = 
+    const isAssistantMessage =
       element.classList.toString().includes('assistant') ||
       element.querySelector('[data-message-author-role="assistant"]') ||
       element.textContent?.includes('ChatGPT') ||
@@ -121,7 +116,7 @@ export class ResponseInterceptor {
       return;
     }
 
-    logger.debug('Found assistant message element');
+    // Removed debug log for production
     this.processedMessages.add(element);
 
     // Wait for streaming to complete
@@ -141,10 +136,10 @@ export class ResponseInterceptor {
 
       if (currentContent === lastContent) {
         stableCount++;
-        
+
         if (stableCount >= requiredStableChecks) {
           clearInterval(checkInterval);
-          logger.info('Streaming complete, checking response');
+          // Removed info log for production
           await this.checkResponse(messageElement, currentContent);
         }
       } else {
@@ -168,8 +163,8 @@ export class ResponseInterceptor {
     }
 
     try {
-      logger.info('Checking LLM response with Phase 15 API');
-      
+      // Removed info log for production
+
       // Check output with streaming_final mode
       // Use consistent conversation ID
       const conversationId = `chrome_ext_${Date.now()}`;
@@ -179,22 +174,18 @@ export class ResponseInterceptor {
         logger.warn('Response blocked:', result.reasons);
         this.replaceBlockedContent(messageElement, result.reasons);
       } else if (result.warnings.length > 0) {
-        logger.info('Response has warnings:', result.warnings);
+        // Log warnings as they are important for security
+        logger.warn('Response has warnings:', result.warnings);
         this.addWarningIndicator(messageElement, result.warnings);
       }
 
       // Log metadata
-      logger.debug('Response check complete:', {
-        action: result.action,
-        guardrails: result.metadata?.guardrails_triggered,
-        time: result.metadata?.processing_time_ms,
-      });
+      // Removed debug log for production
     } catch (error) {
       logger.error('Error checking response:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         contentLength: content.length,
-        conversationId
       });
       // Fail open - don't block on errors
     }
@@ -208,11 +199,11 @@ export class ResponseInterceptor {
     messageElement.setAttribute('data-original-content', messageElement.textContent || '');
 
     // Replace with safe message
-    messageElement.textContent = "I cannot provide that information due to safety policies.";
-    
+    messageElement.textContent = 'I cannot provide that information due to safety policies.';
+
     // Add visual indicator
     messageElement.classList.add('stinger-blocked-response');
-    
+
     // Add tooltip with reasons
     const tooltip = document.createElement('div');
     tooltip.className = 'stinger-block-tooltip';
@@ -235,7 +226,7 @@ export class ResponseInterceptor {
     warningIcon.className = 'stinger-warning-icon';
     warningIcon.textContent = '⚠️';
     warningIcon.title = warnings.join(', ');
-    
+
     // Insert at beginning of message
     messageElement.insertBefore(warningIcon, messageElement.firstChild);
   }

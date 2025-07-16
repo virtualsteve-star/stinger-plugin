@@ -71,7 +71,7 @@ export class PromptInterceptor {
    * Start intercepting prompts
    */
   start(): void {
-    logger.info('Starting prompt interception');
+    // Removed info log for production
 
     // Set up initial interception with retries
     this.setupInterceptionWithRetries();
@@ -113,7 +113,7 @@ export class PromptInterceptor {
    */
   setStreamingEnabled(enabled: boolean): void {
     this.streamingEnabled = enabled;
-    logger.info('Streaming mode:', enabled ? 'enabled' : 'disabled');
+    // Removed info log for production
   }
 
   /**
@@ -122,29 +122,25 @@ export class PromptInterceptor {
   private setupInterceptionWithRetries(): void {
     let attempts = 0;
     const maxAttempts = 10;
-    
+
     const trySetup = () => {
       attempts++;
-      logger.debug(`Attempting to set up interception (${attempts}/${maxAttempts})`);
-      
+      // Removed debug log for production
+
       this.setupInterception();
-      
+
       // Log what we found
-      logger.info('Prompt interceptor setup complete', {
-        hasInput: !!this.promptInput,
-        hasButton: !!this.submitButton,
-        inputType: this.promptInput?.tagName || 'none'
-      });
-      
+      // Removed info log for production
+
       // If we didn't find the input, try again
       if (!this.promptInput && attempts < maxAttempts) {
-        logger.debug(`Retrying in 1 second (attempt ${attempts}/${maxAttempts})`);
+        // Removed debug log for production
         setTimeout(trySetup, 1000);
       } else if (!this.promptInput) {
         logger.error('Failed to find prompt input after maximum attempts');
       }
     };
-    
+
     trySetup();
   }
 
@@ -159,15 +155,11 @@ export class PromptInterceptor {
     if (!this.promptInput) {
       logger.warn('Could not find prompt input');
       // Log what elements we do find for debugging
-      logger.debug('Available textareas:', document.querySelectorAll('textarea').length);
-      logger.debug('Available contenteditable:', document.querySelectorAll('[contenteditable="true"]').length);
+      // Removed debug logs for production
       return;
     }
 
-    logger.debug('Found prompt input:', {
-      element: this.promptInput.tagName,
-      hasButton: !!this.submitButton
-    });
+    // Removed debug log for production
 
     // Always set up fresh monitoring when input changes
     if (oldInput !== this.promptInput) {
@@ -184,13 +176,13 @@ export class PromptInterceptor {
   /**
    * Intercept form submission
    */
-  private interceptFormSubmission(): void {
+  /* private interceptFormSubmission(): void {
     const form = this.promptInput?.closest('form');
     if (form) {
       // Listen to submit event
       form.addEventListener('submit', this.handleFormSubmit, true);
     }
-  }
+  } */
 
   /**
    * Intercept button clicks
@@ -200,11 +192,11 @@ export class PromptInterceptor {
 
     // Check if we already added a listener to this button
     if (this.interceptedElements.has(this.submitButton)) {
-      logger.debug('Submit button already has click listener');
+      // Removed debug log for production
       return;
     }
 
-    logger.debug('Adding click listener to submit button');
+    // Removed debug log for production
 
     // Capture value on mouseover - before click!
     this.submitButton!.addEventListener(
@@ -236,18 +228,14 @@ export class PromptInterceptor {
 
     // Check if we already added a listener to this input
     if (this.interceptedElements.has(this.promptInput)) {
-      logger.debug('Prompt input already has keydown listener');
+      // Removed debug log for production
       return;
     }
 
-    logger.debug('Adding keydown listener to prompt input:', {
-      element: this.promptInput.tagName,
-      id: this.promptInput.id
-    });
-    
+    // Removed debug log for production
+
     // Simple keydown listener on the input element
     this.promptInput.addEventListener('keydown', this.handleKeyDown, true);
-    
 
     // Mark that we've added a listener (using WeakSet instead of DOM attribute)
     this.interceptedElements.add(this.promptInput);
@@ -256,17 +244,17 @@ export class PromptInterceptor {
   /**
    * Handle form submission
    */
-  private handleFormSubmit = async (e: Event): Promise<void> => {
+  /* private handleFormSubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
     e.stopPropagation();
     await this.checkAndSubmitPrompt();
-  };
+  }; */
 
   /**
    * Handle submit button click
    */
   private handleSubmitClick = (e: Event): void => {
-    logger.debug('Submit button clicked - intercepting');
+    // Removed debug log for production
 
     // Only handle if not already prevented
     if (e.defaultPrevented) {
@@ -286,8 +274,8 @@ export class PromptInterceptor {
    * Handle button click detected via mouseover
    */
   private handleMouseoverButtonClick = (e: Event): void => {
-    logger.debug('Button click intercepted');
-    
+    // Removed debug log for production
+
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -303,10 +291,10 @@ export class PromptInterceptor {
    */
   private handleKeyDown = async (e: Event): Promise<void> => {
     const keyEvent = e as KeyboardEvent;
-    
+
     // Check if Enter was pressed without Shift (Shift+Enter adds newline)
     if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
-      logger.debug('Enter key pressed - intercepting submission');
+      // Removed debug log for production
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation(); // Stop all other handlers
@@ -319,7 +307,7 @@ export class PromptInterceptor {
    */
   private async checkAndSubmitPrompt(): Promise<void> {
     if (this.isCheckingPrompt) {
-      logger.debug('Already checking prompt, ignoring');
+      // Removed debug log for production
       return;
     }
 
@@ -346,7 +334,7 @@ export class PromptInterceptor {
     }
 
     if (!promptText) {
-      logger.debug('Empty prompt, ignoring');
+      // Removed debug log for production
       return;
     }
 
@@ -354,7 +342,7 @@ export class PromptInterceptor {
     this.setSubmitButtonState('checking');
 
     try {
-      logger.info('Checking prompt:', promptText.substring(0, 50) + '...');
+      // Removed info log for production
 
       // Use Phase 15 API if enabled
       if (this.usePhase15API) {
@@ -379,19 +367,15 @@ export class PromptInterceptor {
    */
   private async analyzeWithPhase15(promptText: string): Promise<void> {
     try {
-      logger.info('Using Phase 15 API for input checking');
-      
+      // Removed info log for production
+
       // Check input with default mode (full protection)
       // Generate conversation ID from tab/session
       const conversationId = `chrome_ext_${Date.now()}`;
       const result = await stingerClientV2.checkInput(promptText, conversationId);
-      
+
       // Handle result
-      this.handleAnalysisResult(
-        result.action === 'block',
-        result.warnings,
-        result.reasons
-      );
+      this.handleAnalysisResult(result.action === 'block', result.warnings, result.reasons);
     } catch (error) {
       logger.error('Phase 15 API error:', error);
       // Fail open - allow submission
@@ -404,7 +388,7 @@ export class PromptInterceptor {
    */
   private async analyzeWithStreaming(promptText: string): Promise<void> {
     try {
-      logger.info('Starting streaming analysis');
+      // Removed info log for production
 
       // Start progress indication
       this.progressFeedback.startSecurityCheck();
@@ -454,7 +438,7 @@ export class PromptInterceptor {
     await this.messageBus.send(message);
     const result = await resultPromise;
 
-    logger.info('Batch check result:', result.action);
+    // Removed info log for production
 
     // Handle the result
     const blocked = result.action === 'block';
@@ -520,7 +504,7 @@ export class PromptInterceptor {
   private submitPrompt(): void {
     if (!this.promptInput) return;
 
-    logger.debug('Submitting prompt programmatically');
+    // Removed debug log for production
 
     // Temporarily remove our Enter key handler to avoid recursion
     this.promptInput.removeEventListener('keydown', this.handleKeyDown, true);
@@ -608,7 +592,7 @@ export class PromptInterceptor {
       const currentButton = getSubmitButton();
 
       if (currentInput !== this.promptInput || currentButton !== this.submitButton) {
-        logger.debug('Elements changed, re-setting up interception');
+        // Removed debug log for production
         this.setupInterception();
       }
     });
@@ -635,14 +619,15 @@ export class PromptInterceptor {
    */
   private trackButtonChanges(): void {
     // Find all buttons in the input area
-    const inputContainer = this.promptInput?.closest('[data-testid="composer-background"]') || 
-                          this.promptInput?.closest('form') || 
-                          this.promptInput?.parentElement;
-    
+    const inputContainer =
+      this.promptInput?.closest('[data-testid="composer-background"]') ||
+      this.promptInput?.closest('form') ||
+      this.promptInput?.parentElement;
+
     if (!inputContainer) return;
 
     const buttons = inputContainer.querySelectorAll('button');
-    const buttonInfo = Array.from(buttons).map(btn => ({
+    const buttonInfo = Array.from(buttons).map((btn) => ({
       text: btn.textContent?.trim() || '',
       ariaLabel: btn.getAttribute('aria-label') || '',
       dataTestId: btn.getAttribute('data-testid') || '',
@@ -651,35 +636,42 @@ export class PromptInterceptor {
       classes: btn.className,
       hasHover: btn.matches(':hover'),
       hasFocus: btn.matches(':focus'),
-      innerHTML: btn.innerHTML.substring(0, 100) // First 100 chars of HTML
+      innerHTML: btn.innerHTML.substring(0, 100), // First 100 chars of HTML
     }));
 
     // Log button changes
     const buttonSnapshot = JSON.stringify(buttonInfo);
     if (buttonSnapshot !== (this as any).lastButtonSnapshot) {
       (this as any).lastButtonSnapshot = buttonSnapshot;
-      
+
       // Check for the actual send button
-      const sendButton = Array.from(buttons).find(btn => {
+      const sendButton = Array.from(buttons).find((btn) => {
         const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
         const text = btn.textContent?.toLowerCase() || '';
-        return ariaLabel.includes('send') || text.includes('send') || 
-               btn.getAttribute('data-testid') === 'send-button';
+        return (
+          ariaLabel.includes('send') ||
+          text.includes('send') ||
+          btn.getAttribute('data-testid') === 'send-button'
+        );
       });
-      
+
       if (sendButton && sendButton !== this.submitButton) {
-        logger.debug('New send button detected');
+        // Removed debug log for production
         this.submitButton = sendButton as HTMLButtonElement;
         this.interceptButtonClick();
-        
+
         // Also add direct click listener to this specific button
-        sendButton.addEventListener('click', (e) => {
-          logger.debug('Direct button click intercepted');
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          this.checkAndSubmitPrompt();
-        }, true);
+        sendButton.addEventListener(
+          'click',
+          (e) => {
+            // Removed debug log for production
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            this.checkAndSubmitPrompt();
+          },
+          true,
+        );
       }
     }
   }
@@ -689,10 +681,11 @@ export class PromptInterceptor {
    */
   private setupMouseTracking(): void {
     // Track mouse events on the entire input container
-    const inputContainer = this.promptInput?.closest('[data-testid="composer-background"]') || 
-                          this.promptInput?.closest('form') || 
-                          this.promptInput?.parentElement;
-    
+    const inputContainer =
+      this.promptInput?.closest('[data-testid="composer-background"]') ||
+      this.promptInput?.closest('form') ||
+      this.promptInput?.parentElement;
+
     if (!inputContainer) return;
 
     // Add mouse event listeners
@@ -701,38 +694,45 @@ export class PromptInterceptor {
         // If this is a send button, add click listener directly
         const ariaLabel = e.target.getAttribute('aria-label')?.toLowerCase() || '';
         if (ariaLabel.includes('send') || e.target.getAttribute('data-testid') === 'send-button') {
-          logger.debug('Send button detected on mouseover - adding click listener');
-          
+          // Removed debug log for production
+
           // Remove any existing listener first
           e.target.removeEventListener('click', this.handleMouseoverButtonClick);
-          
+
           // Add new listener
           e.target.addEventListener('click', this.handleMouseoverButtonClick, true);
         }
       }
     });
 
-    inputContainer.addEventListener('click', (e) => {
-      if (e.target instanceof HTMLButtonElement) {
-        // Check if this could be the send button
-        const ariaLabel = e.target.getAttribute('aria-label')?.toLowerCase() || '';
-        const text = e.target.textContent?.toLowerCase() || '';
-        if (ariaLabel.includes('send') || text.includes('send') || 
-            e.target.getAttribute('data-testid') === 'send-button') {
-          logger.debug('Send button clicked - intercepting');
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          this.checkAndSubmitPrompt();
+    inputContainer.addEventListener(
+      'click',
+      (e) => {
+        if (e.target instanceof HTMLButtonElement) {
+          // Check if this could be the send button
+          const ariaLabel = e.target.getAttribute('aria-label')?.toLowerCase() || '';
+          const text = e.target.textContent?.toLowerCase() || '';
+          if (
+            ariaLabel.includes('send') ||
+            text.includes('send') ||
+            e.target.getAttribute('data-testid') === 'send-button'
+          ) {
+            // Removed debug log for production
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            this.checkAndSubmitPrompt();
+          }
         }
-      }
-    }, true); // Use capture phase
+      },
+      true,
+    ); // Use capture phase
   }
 
   /**
    * Set up input monitoring to track value changes
    */
-  private setupInputMonitoring(): void {
+  /* private setupInputMonitoring(): void {
     if (!this.promptInput) return;
 
     // Don't set up monitoring twice for the same element
@@ -770,7 +770,7 @@ export class PromptInterceptor {
 
     // Mark this input as monitored
     this.interceptedElements.add(this.promptInput);
-  }
+  } */
 
   /**
    * Monitor for input changes to detect when submit button appears
@@ -786,7 +786,7 @@ export class PromptInterceptor {
         this.interceptButtonClick();
       }
     });
-    
+
     // Also check on focus - ChatGPT might show the button when focused
     this.promptInput.addEventListener('focus', () => {
       const newButton = getSubmitButton();
@@ -796,5 +796,4 @@ export class PromptInterceptor {
       }
     });
   }
-
 }

@@ -40,7 +40,7 @@ export class ChatGPTDOMObserver {
       return;
     }
 
-    logger.info('Starting DOM observer');
+    // Removed info log for production
 
     this.observer = new MutationObserver((mutations) => {
       this.handleMutations(mutations);
@@ -60,7 +60,7 @@ export class ChatGPTDOMObserver {
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
-      logger.info('DOM observer stopped');
+      // Removed info log for production
     }
   }
 
@@ -94,7 +94,7 @@ export class ChatGPTDOMObserver {
       ) {
         const text = this.extractMessageText(element);
         if (text && this.callbacks.onNewUserMessage) {
-          logger.debug('New user message detected:', text.substring(0, 50) + '...');
+          // Removed debug log for production
           this.callbacks.onNewUserMessage(text);
         }
       }
@@ -106,7 +106,7 @@ export class ChatGPTDOMObserver {
       ) {
         const text = this.extractMessageText(element);
         if (text && this.callbacks.onNewAssistantMessage) {
-          logger.debug('New assistant message detected');
+          // Removed debug log for production
           this.callbacks.onNewAssistantMessage(text);
           this.lastAssistantMessage = text;
         }
@@ -130,7 +130,7 @@ export class ChatGPTDOMObserver {
     if (messageContainer) {
       const text = this.extractMessageText(messageContainer);
       if (text && text !== this.lastAssistantMessage && this.callbacks.onAssistantMessageUpdate) {
-        logger.debug('Assistant message updated');
+        // Removed debug log for production
         this.callbacks.onAssistantMessageUpdate(text);
         this.lastAssistantMessage = text;
       }
@@ -160,14 +160,14 @@ export class ChatGPTDOMObserver {
         // Generation started
         this.isCurrentlyGenerating = true;
         if (this.callbacks.onGenerationStart) {
-          logger.debug('Generation started');
+          // Removed debug log for production
           this.callbacks.onGenerationStart();
         }
       } else if (!currentlyGenerating && this.isCurrentlyGenerating) {
         // Generation ended
         this.isCurrentlyGenerating = false;
         if (this.callbacks.onGenerationEnd) {
-          logger.debug('Generation ended');
+          // Removed debug log for production
           this.callbacks.onGenerationEnd();
 
           // Check final message

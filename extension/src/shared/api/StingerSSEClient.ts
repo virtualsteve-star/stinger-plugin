@@ -85,10 +85,10 @@ export class StingerSSEClient {
           'X-User-Context': this.detectUserContext(),
           ...this.config.headers,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           content: text,
           preset: 'balanced',
-          context_type: 'response'
+          context_type: 'response',
         }),
       });
 
@@ -183,7 +183,7 @@ export class StingerSSEClient {
         if (data.results && Array.isArray(data.results)) {
           for (const guardrailResult of data.results) {
             result.guardrailResults.push(guardrailResult);
-            
+
             if (guardrailResult.result.blocked) {
               result.blocked = true;
               result.reasons.push(guardrailResult.result.reason);
