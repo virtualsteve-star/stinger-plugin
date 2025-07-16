@@ -72,7 +72,7 @@ export class StingerSSEClient {
       // Get tab ID if available
       await this.updateTabId();
 
-      const url = `${this.config.baseUrl}/api/v1/stream/analyze`;
+      const url = `${this.config.baseUrl}/stream/analyze`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -85,7 +85,11 @@ export class StingerSSEClient {
           'X-User-Context': this.detectUserContext(),
           ...this.config.headers,
         },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ 
+          content: text,
+          preset: 'balanced',
+          context_type: 'response'
+        }),
       });
 
       if (!response.ok) {
@@ -173,6 +177,34 @@ export class StingerSSEClient {
         }
         break;
       }
+
+      case 'guardrail_batch': {
+        // Process batched FAST guardrail results
+        if (data.results && Array.isArray(data.results)) {
+          for (const guardrailResult of data.results) {
+            result.guardrailResults.push(guardrailResult);
+            
+            if (guardrailResult.result.blocked) {
+              result.blocked = true;
+              result.reasons.push(guardrailResult.result.reason);
+            }
+            if (guardrailResult.result.action === 'warn') {
+              result.warnings.push(guardrailResult.result.reason);
+            }
+          }
+        }
+        break;
+      }
+
+      case 'accumulating':
+        // Token accumulation in progress - no action needed
+        logger.debug('Accumulating tokens:', data.accumulated_length);
+        break;
+
+      case 'segment_ready':
+        // Segment ready for analysis
+        logger.debug('Analyzing segment:', data.segment_length);
+        break;
 
       case 'input_blocked':
         result.blocked = true;

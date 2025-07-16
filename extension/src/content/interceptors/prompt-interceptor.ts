@@ -8,6 +8,7 @@ import { getPromptInput, getSubmitButton } from '../selectors/chatgpt';
 import { StingerOverlay } from '../ui/overlay';
 import { ProgressiveSecurityFeedback } from '../ui/ProgressiveSecurityFeedback';
 import { StingerSSEClient } from '../../shared/api/StingerSSEClient';
+import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { UI_CONFIG, SECURITY_CONFIG } from '../../shared/constants';
 import type { CheckPromptMessage, CheckResultMessage } from '../../shared/types/messages';
 
@@ -23,6 +24,7 @@ export class PromptInterceptor {
   private progressFeedback: ProgressiveSecurityFeedback;
   private sseClient: StingerSSEClient;
   private interceptedElements = new WeakSet<Element>();
+  private usePhase15API = true;
   private lastKnownValue = '';
   private intervalId: number | null = null;
   private mutationObserver: MutationObserver | null = null;
@@ -71,8 +73,8 @@ export class PromptInterceptor {
   start(): void {
     logger.info('Starting prompt interception');
 
-    // Set up initial interception
-    this.setupInterception();
+    // Set up initial interception with retries
+    this.setupInterceptionWithRetries();
 
     // Monitor for DOM changes (ChatGPT might recreate elements)
     this.monitorForElementChanges();
@@ -115,6 +117,38 @@ export class PromptInterceptor {
   }
 
   /**
+   * Set up interception with retries
+   */
+  private setupInterceptionWithRetries(): void {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const trySetup = () => {
+      attempts++;
+      logger.debug(`Attempting to set up interception (${attempts}/${maxAttempts})`);
+      
+      this.setupInterception();
+      
+      // Log what we found
+      logger.info('Prompt interceptor setup complete', {
+        hasInput: !!this.promptInput,
+        hasButton: !!this.submitButton,
+        inputType: this.promptInput?.tagName || 'none'
+      });
+      
+      // If we didn't find the input, try again
+      if (!this.promptInput && attempts < maxAttempts) {
+        logger.debug(`Retrying in 1 second (attempt ${attempts}/${maxAttempts})`);
+        setTimeout(trySetup, 1000);
+      } else if (!this.promptInput) {
+        logger.error('Failed to find prompt input after maximum attempts');
+      }
+    };
+    
+    trySetup();
+  }
+
+  /**
    * Set up interception on current elements
    */
   private setupInterception(): void {
@@ -124,13 +158,15 @@ export class PromptInterceptor {
 
     if (!this.promptInput) {
       logger.warn('Could not find prompt input');
+      // Log what elements we do find for debugging
+      logger.debug('Available textareas:', document.querySelectorAll('textarea').length);
+      logger.debug('Available contenteditable:', document.querySelectorAll('[contenteditable="true"]').length);
       return;
     }
 
     logger.debug('Found prompt input:', {
-      selector:
-        (this.promptInput as any).name || (this.promptInput as any).placeholder || 'unknown',
-      hasButton: !!this.submitButton,
+      element: this.promptInput.tagName,
+      hasButton: !!this.submitButton
     });
 
     // Always set up fresh monitoring when input changes
@@ -138,23 +174,6 @@ export class PromptInterceptor {
       // Remove from tracked elements so monitoring gets set up again
       if (oldInput) {
         this.interceptedElements.delete(oldInput);
-      }
-    }
-
-    // Set up input monitoring to track value changes
-    this.setupInputMonitoring();
-
-    // Intercept form submission
-    this.interceptFormSubmission();
-
-    // Intercept button clicks if button found (including voice button that turns into submit)
-    if (this.submitButton) {
-      this.interceptButtonClick();
-    } else {
-      // Try to intercept the voice button that will become submit button
-      const voiceButton = document.querySelector('button[aria-label="Start voice mode"]');
-      if (voiceButton) {
-        logger.debug('Found voice button, will monitor for transformation');
       }
     }
 
@@ -200,8 +219,10 @@ export class PromptInterceptor {
       true,
     );
 
-    // Simple click listener - the value will be captured by mouseover
+    // Multiple event listeners to ensure interception
     this.submitButton.addEventListener('click', this.handleSubmitClick, true);
+    this.submitButton.addEventListener('mousedown', this.handleSubmitClick, true);
+    this.submitButton.addEventListener('pointerdown', this.handleSubmitClick, true);
 
     // Mark that we've added a listener (using WeakSet instead of DOM attribute)
     this.interceptedElements.add(this.submitButton);
@@ -219,8 +240,14 @@ export class PromptInterceptor {
       return;
     }
 
-    logger.info('Adding keydown listener to prompt input');
+    logger.debug('Adding keydown listener to prompt input:', {
+      element: this.promptInput.tagName,
+      id: this.promptInput.id
+    });
+    
+    // Simple keydown listener on the input element
     this.promptInput.addEventListener('keydown', this.handleKeyDown, true);
+    
 
     // Mark that we've added a listener (using WeakSet instead of DOM attribute)
     this.interceptedElements.add(this.promptInput);
@@ -256,20 +283,30 @@ export class PromptInterceptor {
   };
 
   /**
+   * Handle button click detected via mouseover
+   */
+  private handleMouseoverButtonClick = (e: Event): void => {
+    logger.debug('Button click intercepted');
+    
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    // Run the check
+    this.checkAndSubmitPrompt().catch((error) => {
+      logger.error('Error in checkAndSubmitPrompt:', error);
+    });
+  };
+
+  /**
    * Handle keydown events
    */
   private handleKeyDown = async (e: Event): Promise<void> => {
     const keyEvent = e as KeyboardEvent;
-    // Log all keydown events for debugging
-    if (keyEvent.key === 'Enter') {
-      logger.info(
-        `Enter key detected - Shift: ${keyEvent.shiftKey}, Target: ${(keyEvent.target as HTMLElement).tagName}`,
-      );
-    }
-
+    
     // Check if Enter was pressed without Shift (Shift+Enter adds newline)
     if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
-      logger.info('Enter key pressed - intercepting submission!');
+      logger.debug('Enter key pressed - intercepting submission');
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation(); // Stop all other handlers
@@ -319,8 +356,10 @@ export class PromptInterceptor {
     try {
       logger.info('Checking prompt:', promptText.substring(0, 50) + '...');
 
-      // Try streaming analysis first, fallback to batch if needed
-      if (this.streamingEnabled && StingerSSEClient.isSupported()) {
+      // Use Phase 15 API if enabled
+      if (this.usePhase15API) {
+        await this.analyzeWithPhase15(promptText);
+      } else if (this.streamingEnabled && StingerSSEClient.isSupported()) {
         await this.analyzeWithStreaming(promptText);
       } else {
         await this.analyzeWithBatch(promptText);
@@ -332,6 +371,31 @@ export class PromptInterceptor {
     } finally {
       this.isCheckingPrompt = false;
       this.setSubmitButtonState('ready');
+    }
+  }
+
+  /**
+   * Analyze with Phase 15 API
+   */
+  private async analyzeWithPhase15(promptText: string): Promise<void> {
+    try {
+      logger.info('Using Phase 15 API for input checking');
+      
+      // Check input with default mode (full protection)
+      // Generate conversation ID from tab/session
+      const conversationId = `chrome_ext_${Date.now()}`;
+      const result = await stingerClientV2.checkInput(promptText, conversationId);
+      
+      // Handle result
+      this.handleAnalysisResult(
+        result.action === 'block',
+        result.warnings,
+        result.reasons
+      );
+    } catch (error) {
+      logger.error('Phase 15 API error:', error);
+      // Fail open - allow submission
+      this.submitPrompt();
     }
   }
 
@@ -527,7 +591,7 @@ export class PromptInterceptor {
   }
 
   /**
-   * Monitor for element changes
+   * Monitor for element changes - with detailed button tracking
    */
   private monitorForElementChanges(): void {
     // Clean up existing observers
@@ -554,19 +618,115 @@ export class PromptInterceptor {
     this.mutationObserver.observe(mainContent, {
       childList: true,
       subtree: true,
-      attributes: false,
+      attributes: true, // Watch for attribute changes too
     });
 
-    // Also check periodically as backup
+    // Detailed button monitoring loop
     this.intervalId = window.setInterval(() => {
-      const currentInput = getPromptInput();
-      const currentButton = getSubmitButton();
+      this.trackButtonChanges();
+    }, 200); // Check every 200ms for detailed tracking
 
-      if (currentInput !== this.promptInput || currentButton !== this.submitButton) {
-        logger.debug('Elements changed (interval check), re-setting up interception');
-        this.setupInterception();
+    // Add mouse event tracking for button hover detection
+    this.setupMouseTracking();
+  }
+
+  /**
+   * Track button changes in detail
+   */
+  private trackButtonChanges(): void {
+    // Find all buttons in the input area
+    const inputContainer = this.promptInput?.closest('[data-testid="composer-background"]') || 
+                          this.promptInput?.closest('form') || 
+                          this.promptInput?.parentElement;
+    
+    if (!inputContainer) return;
+
+    const buttons = inputContainer.querySelectorAll('button');
+    const buttonInfo = Array.from(buttons).map(btn => ({
+      text: btn.textContent?.trim() || '',
+      ariaLabel: btn.getAttribute('aria-label') || '',
+      dataTestId: btn.getAttribute('data-testid') || '',
+      disabled: btn.disabled,
+      visible: btn.offsetParent !== null,
+      classes: btn.className,
+      hasHover: btn.matches(':hover'),
+      hasFocus: btn.matches(':focus'),
+      innerHTML: btn.innerHTML.substring(0, 100) // First 100 chars of HTML
+    }));
+
+    // Log button changes
+    const buttonSnapshot = JSON.stringify(buttonInfo);
+    if (buttonSnapshot !== (this as any).lastButtonSnapshot) {
+      (this as any).lastButtonSnapshot = buttonSnapshot;
+      
+      // Check for the actual send button
+      const sendButton = Array.from(buttons).find(btn => {
+        const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+        const text = btn.textContent?.toLowerCase() || '';
+        return ariaLabel.includes('send') || text.includes('send') || 
+               btn.getAttribute('data-testid') === 'send-button';
+      });
+      
+      if (sendButton && sendButton !== this.submitButton) {
+        logger.debug('New send button detected');
+        this.submitButton = sendButton as HTMLButtonElement;
+        this.interceptButtonClick();
+        
+        // Also add direct click listener to this specific button
+        sendButton.addEventListener('click', (e) => {
+          logger.debug('Direct button click intercepted');
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          this.checkAndSubmitPrompt();
+        }, true);
       }
-    }, UI_CONFIG.ELEMENT_CHECK_INTERVAL);
+    }
+  }
+
+  /**
+   * Set up mouse tracking for button hover detection
+   */
+  private setupMouseTracking(): void {
+    // Track mouse events on the entire input container
+    const inputContainer = this.promptInput?.closest('[data-testid="composer-background"]') || 
+                          this.promptInput?.closest('form') || 
+                          this.promptInput?.parentElement;
+    
+    if (!inputContainer) return;
+
+    // Add mouse event listeners
+    inputContainer.addEventListener('mouseover', (e) => {
+      if (e.target instanceof HTMLButtonElement) {
+        // If this is a send button, add click listener directly
+        const ariaLabel = e.target.getAttribute('aria-label')?.toLowerCase() || '';
+        if (ariaLabel.includes('send') || e.target.getAttribute('data-testid') === 'send-button') {
+          logger.debug('Send button detected on mouseover - adding click listener');
+          
+          // Remove any existing listener first
+          e.target.removeEventListener('click', this.handleMouseoverButtonClick);
+          
+          // Add new listener
+          e.target.addEventListener('click', this.handleMouseoverButtonClick, true);
+        }
+      }
+    });
+
+    inputContainer.addEventListener('click', (e) => {
+      if (e.target instanceof HTMLButtonElement) {
+        // Check if this could be the send button
+        const ariaLabel = e.target.getAttribute('aria-label')?.toLowerCase() || '';
+        const text = e.target.textContent?.toLowerCase() || '';
+        if (ariaLabel.includes('send') || text.includes('send') || 
+            e.target.getAttribute('data-testid') === 'send-button') {
+          logger.debug('Send button clicked - intercepting');
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          this.checkAndSubmitPrompt();
+        }
+      }
+    }, true); // Use capture phase
   }
 
   /**
@@ -589,8 +749,24 @@ export class PromptInterceptor {
       }
     };
 
-    // Only monitor input event - that's sufficient
+    // Monitor multiple input events
     this.promptInput.addEventListener('input', captureValue, true);
+    this.promptInput.addEventListener('textInput', captureValue, true);
+    this.promptInput.addEventListener('paste', captureValue, true);
+    
+    // Use MutationObserver to detect content changes
+    const observer = new MutationObserver(() => {
+      const value = this.getInputValue(this.promptInput);
+      if (value && value !== this.lastKnownValue) {
+        this.lastKnownValue = value;
+      }
+    });
+    
+    observer.observe(this.promptInput, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
 
     // Mark this input as monitored
     this.interceptedElements.add(this.promptInput);
@@ -604,14 +780,21 @@ export class PromptInterceptor {
 
     // Check if we need to re-setup button interception
     this.promptInput.addEventListener('input', () => {
-      if (!this.submitButton || !this.interceptedElements.has(this.submitButton)) {
-        const newButton = getSubmitButton();
-        if (newButton && newButton !== this.submitButton) {
-          logger.debug('Submit button appeared, setting up interception');
-          this.submitButton = newButton;
-          this.interceptButtonClick();
-        }
+      const newButton = getSubmitButton();
+      if (newButton && newButton !== this.submitButton) {
+        this.submitButton = newButton;
+        this.interceptButtonClick();
+      }
+    });
+    
+    // Also check on focus - ChatGPT might show the button when focused
+    this.promptInput.addEventListener('focus', () => {
+      const newButton = getSubmitButton();
+      if (newButton && newButton !== this.submitButton) {
+        this.submitButton = newButton;
+        this.interceptButtonClick();
       }
     });
   }
+
 }

@@ -7,15 +7,19 @@ import { loggers } from '../shared/logging/Logger';
 import { ChatGPTDOMObserver } from './observers/dom-observer';
 import { PromptInterceptor } from './interceptors/prompt-interceptor';
 import { ResponseMonitor } from './interceptors/response-monitor';
+import { ResponseInterceptor } from './interceptors/response-interceptor';
 import type { ContentLoadedMessage } from '../shared/types/messages';
 
 const logger = loggers.content;
 const messageBus = new MessageBus();
 
+// Simple DOM-based interception approach
+
 // Components
 let domObserver: ChatGPTDOMObserver | null = null;
 let promptInterceptor: PromptInterceptor | null = null;
 let responseMonitor: ResponseMonitor | null = null;
+let responseInterceptor: ResponseInterceptor | null = null;
 
 // Initialize Stinger Guard
 async function initializeStingerGuard() {
@@ -62,6 +66,10 @@ function setupResponseMonitoring() {
   logger.debug('Setting up response monitoring...');
 
   responseMonitor = new ResponseMonitor(messageBus);
+  
+  // Also set up Phase 15 response interceptor
+  responseInterceptor = new ResponseInterceptor();
+  responseInterceptor.start();
 }
 
 // Set up DOM observation
@@ -111,6 +119,10 @@ window.addEventListener('unload', () => {
 
   if (promptInterceptor) {
     promptInterceptor.stop();
+  }
+  
+  if (responseInterceptor) {
+    responseInterceptor.stop();
   }
 });
 

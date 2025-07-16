@@ -21,13 +21,29 @@ export const ChatGPTSelectors = {
   // Submit button (appears when textarea has content)
   submitButton: 'button[data-testid="send-button"]',
   alternativeSubmitButtons: [
+    // Primary send button patterns
     'button[aria-label*="Send"]',
     'button[aria-label="Send prompt"]',
     'button[aria-label="Send message"]',
+    'button[data-testid*="send"]',
+    
     // Look for the button that appears after typing
     'div[data-visible] button:has(svg)',
-    // Button that contains the send icon path
+    'button:has(svg[data-icon="send"])',
+    'button:has(path[d*="send"])',
+    
+    // Button that contains the send icon path (common ChatGPT send icon)
     'button:has(path[d*="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8"])',
+    'button:has(path[d*="M2.01 21L23 12 2.01 3"])', // Another common send icon
+    
+    // Form and positioning-based selectors
+    'button[type="submit"]',
+    'form button:last-child',
+    'div[contenteditable] ~ button:last-child',
+    'div[contenteditable] + button',
+    
+    // Look for buttons that appear only when typing (common ChatGPT pattern)
+    'button:not([disabled]):not([aria-label*="voice"]):not([aria-label*="Voice"]):not([aria-label*="attachment"]):not([aria-label*="Attachment"]):not([aria-label*="Add photos"]):not([aria-label*="files"]):not([aria-label*="upload"]):not([aria-label*="Choose"]):not([aria-label*="tool"])',
   ],
 
   // Message containers
@@ -120,7 +136,20 @@ export function getSubmitButton(): HTMLButtonElement | null {
 
   if (!button) {
     for (const selector of ChatGPTSelectors.alternativeSubmitButtons) {
-      button = document.querySelector<HTMLButtonElement>(selector);
+      const candidates = document.querySelectorAll<HTMLButtonElement>(selector);
+      for (const candidate of candidates) {
+        const ariaLabel = candidate.getAttribute('aria-label') || '';
+        // Skip buttons that are clearly not submit buttons
+        if (ariaLabel.toLowerCase().includes('add photos') || 
+            ariaLabel.toLowerCase().includes('files') ||
+            ariaLabel.toLowerCase().includes('upload') ||
+            ariaLabel.toLowerCase().includes('attachment') ||
+            ariaLabel.toLowerCase().includes('voice')) {
+          continue;
+        }
+        button = candidate;
+        break;
+      }
       if (button) break;
     }
   }
@@ -129,7 +158,7 @@ export function getSubmitButton(): HTMLButtonElement | null {
   if (!button) {
     // Look for buttons that might be the send button (usually has specific styling)
     const possibleButtons = document.querySelectorAll(
-      'button[aria-label]:not([aria-label*="Add"]):not([aria-label*="Choose"]):not([aria-label*="voice"]):not([aria-label*="Dictate"])',
+      'button[aria-label]:not([aria-label*="Add"]):not([aria-label*="Choose"]):not([aria-label*="voice"]):not([aria-label*="Dictate"]):not([aria-label*="photos"]):not([aria-label*="files"]):not([aria-label*="tool"])',
     );
     for (const btn of possibleButtons) {
       const ariaLabel = btn.getAttribute('aria-label') || '';
@@ -138,6 +167,54 @@ export function getSubmitButton(): HTMLButtonElement | null {
         break;
       }
     }
+  }
+
+  // Last resort: look for any button that's not obviously a non-send button
+  if (!button) {
+    const allButtons = document.querySelectorAll('button:not([disabled])');
+    for (const btn of allButtons) {
+      const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
+      const textContent = (btn.textContent || '').toLowerCase();
+      
+      // Skip obvious non-send buttons
+      if (ariaLabel.includes('voice') || ariaLabel.includes('attach') || 
+          ariaLabel.includes('file') || ariaLabel.includes('photo') ||
+          ariaLabel.includes('tool') || ariaLabel.includes('choose') ||
+          ariaLabel.includes('add') || ariaLabel.includes('upload') ||
+          textContent.includes('cancel') || textContent.includes('close')) {
+        continue;
+      }
+      
+      // Look for buttons that might be send buttons
+      if (ariaLabel.includes('send') || textContent.includes('send') ||
+          ariaLabel.includes('submit') || textContent.includes('submit') ||
+          btn.querySelector('svg')) { // SVG often indicates send buttons
+        button = btn as HTMLButtonElement;
+        break;
+      }
+    }
+  }
+
+  // Debug: log what buttons we found
+  if (!button) {
+    console.debug('Stinger: No submit button found. Available buttons:', 
+      Array.from(document.querySelectorAll('button')).map(btn => ({
+        text: btn.textContent?.trim()?.substring(0, 20) || 'no text',
+        ariaLabel: btn.getAttribute('aria-label') || 'no aria-label',
+        dataTestId: btn.getAttribute('data-testid') || 'no data-testid',
+        className: btn.className || 'no class',
+        disabled: btn.disabled,
+        visible: btn.offsetParent !== null
+      }))
+    );
+  } else {
+    console.debug('Stinger: Found submit button:', {
+      text: button.textContent?.trim()?.substring(0, 20) || 'no text',
+      ariaLabel: button.getAttribute('aria-label') || 'no aria-label',
+      dataTestId: button.getAttribute('data-testid') || 'no data-testid',
+      disabled: button.disabled,
+      visible: button.offsetParent !== null
+    });
   }
 
   return button;

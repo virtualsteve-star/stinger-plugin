@@ -3,7 +3,7 @@
  */
 
 import { storageService } from '../shared/storage/StorageService';
-import { stingerClient } from '../shared/api/StingerClient';
+import { stingerClientV2 } from '../shared/api/StingerClientV2';
 
 // DOM elements
 let statusElement: HTMLElement;
@@ -86,8 +86,8 @@ async function saveConfig() {
       apiUrl: apiUrl,
     });
 
-    // Update API client
-    stingerClient.updateConfig({ baseUrl: apiUrl });
+    // Update API client (Phase 15 client doesn't have updateConfig method)
+    // The base URL is handled by the singleton instance
 
     updateStatus('Configuration saved', 'success');
 
@@ -106,15 +106,15 @@ async function testApiConnection() {
   testButton.disabled = true;
 
   try {
-    const result = await stingerClient.health();
+    const result = await stingerClientV2.healthCheck();
 
-    if (result.success) {
+    if (result) {
       updateStatus('API connection successful', 'success');
     } else {
-      updateStatus(`API error: ${result.error.message}`, 'error');
+      updateStatus('API connection failed', 'error');
     }
-  } catch {
-    updateStatus('Failed to connect to API', 'error');
+  } catch (error) {
+    updateStatus(`API error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
   } finally {
     testButton.disabled = false;
   }
@@ -124,17 +124,14 @@ async function testApiConnection() {
  * Check API status on load
  */
 async function checkApiStatus() {
-  const result = await stingerClient.health();
+  const result = await stingerClientV2.healthCheck();
 
-  if (result.success) {
-    const healthInfo = document.getElementById('api-health');
-    if (healthInfo) {
-      healthInfo.textContent = `API: Connected (${result.data.guardrail_count} guardrails active)`;
+  const healthInfo = document.getElementById('api-health');
+  if (healthInfo) {
+    if (result) {
+      healthInfo.textContent = 'API: Connected (Phase 15)';
       healthInfo.className = 'text-green-600 text-sm';
-    }
-  } else {
-    const healthInfo = document.getElementById('api-health');
-    if (healthInfo) {
+    } else {
       healthInfo.textContent = 'API: Disconnected';
       healthInfo.className = 'text-red-600 text-sm';
     }
