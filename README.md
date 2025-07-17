@@ -1,40 +1,41 @@
 # Stinger Guard Chrome Extension
 
 [![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.2.0--preview-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0--a2-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
 [![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.1.0a3-brightgreen)](https://github.com/virtualsteve-star/stinger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms. Now featuring **instant streaming security feedback** with <100ms response times!
 
-## 🚀 Preview Release v0.2.0 - SSE Streaming Integration
+## 🚀 Alpha Release v0.1.0-a2 - Phase 15 API Integration
 
-**⚡ NEW: Real-time streaming security feedback!** Experience instant security analysis with our SSE (Server-Sent Events) integration, delivering <100ms first response times - a **20x improvement** over batch processing.
+**⚡ NEW: Enhanced conversation tracking and code generation blocking!** This release features persistent conversation tracking, improved API integration, and working code generation detection with proper audit trails.
 
 ## Overview
 
 Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces security policies for prompts and responses on LLM interfaces like ChatGPT and Microsoft Copilot. It integrates with the [Stinger](https://github.com/virtualsteve-star/stinger) policy engine to prevent sensitive data leakage and enforce enterprise security policies.
 
-### Key Features (v0.2.0-preview)
+### Key Features (v0.1.0-a2)
 
-- 🆕 **SSE Streaming Integration** - Real-time progressive security feedback with <100ms first response
-- 🆕 **Instant Pattern Detection** - FAST guardrails provide immediate feedback for known patterns
-- 🆕 **Progressive Security Analysis** - See security checks happen in real-time with transparency
+- 🆕 **Persistent Conversation Tracking** - Single conversation ID maintained throughout session
+- 🆕 **User Context Preservation** - User ID from popup tracked across all API calls
+- 🆕 **Code Generation Blocking** - Working detection and blocking of dangerous code patterns
+- 🆕 **Phase 15 API Integration** - Updated to use `/v1/check` endpoint with proper format
 - ✅ **Prompt Interception** - Captures prompts before submission on ChatGPT (Enter key & Submit button)
 - ✅ **Real-time Security Checks** - Validates content against Stinger API guardrails
-- ✅ **User Interface** - Shows warnings/blocks with progressive "🛡️ Security scanning..." indicators
-- ✅ **Conversation Tracking** - Tracks participant types (human/bot/agent/ai_model)
 - ✅ **Response Monitoring** - Checks AI responses for policy violations
-- ✅ **Audit Logging** - All security events logged to Stinger backend
-- ✅ **Graceful Fallback** - Automatic degradation to batch mode if streaming unavailable
+- ✅ **Audit Logging** - Complete conversation tracking with user identification
+- ✅ **Chrome Storage Persistence** - Conversation state survives page refreshes
+- ✅ **Graceful Fallback** - Fail-open behavior on API timeouts with user feedback
 
-### What's New in v0.2.0
+### What's New in v0.1.0-a2
 
-#### ⚡ SSE Streaming Performance
-- **20x faster** first feedback (100ms vs 3-5 seconds)
-- **Progressive transparency** - watch security analysis happen
-- **No blocking delays** - instant pattern detection
-- **Industry-leading UX** - transforms security from "blocking" to "enabling"
+#### 🔒 Enhanced Security & Tracking
+- **Persistent conversation tracking** - Same ID for entire ChatGPT session
+- **User audit trails** - Complete tracking of who's chatting with which bot
+- **Code generation blocking** - Properly detects and blocks dangerous code patterns
+- **Feedback loop prevention** - Error messages no longer sent back to API
+- **Production-ready logging** - Clean console output with essential warnings only
 
 ### Coming Soon
 - 🔜 API Authentication (Issue #4)

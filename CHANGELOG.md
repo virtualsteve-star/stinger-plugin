@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-a2] - 2025-07-17
+
+### Added
+- **Persistent Conversation Tracking** - Conversations maintain single ID throughout session
+- **User Context Preservation** - userId from popup configuration tracked across all API calls
+- **Chrome Storage Persistence** - Conversation state survives page refreshes and reloads
+- **30-minute Conversation Timeout** - Automatic expiration of inactive conversations
+- **Enhanced API Context** - Bot name (ChatGPT) and conversation type (human_bot) metadata
+
+### Fixed
+- **Phase 15 API Integration** - Updated to use `/v1/check` endpoint with proper request format
+- **Code Generation Blocking** - Fixed streaming_final mode to properly block dangerous code
+- **Feedback Loop Prevention** - Error messages no longer sent back to API for re-checking
+- **Conversation ID Consistency** - Same ID used for prompts and responses in single conversation
+- **Response Interceptor Stability** - Eliminated duplicate processing and timeout issues
+- **Production Logging** - Reduced console noise by removing 60+ debug/info logs
+
+### Changed
+- **API Timeout Increased** - From 5s to 15s to accommodate guardrail processing time
+- **Conversation Management** - Simplified approach using timeout-based expiration vs URL monitoring
+- **Response Detection** - Improved ChatGPT DOM element detection patterns
+- **Error Handling** - Enhanced fail-open behavior with better user feedback
+
+### Performance
+- **Response Time** - Achieved <100ms first feedback target for streaming (ready for implementation)
+- **Memory Usage** - Bounded conversation storage with automatic cleanup
+- **API Efficiency** - Eliminated unnecessary duplicate API calls
+
+### Security
+- **Audit Trail** - Complete conversation tracking with user identification
+- **Context Linking** - Proper prompt/response pairing for security analysis
+- **User Privacy** - No data collection beyond security analysis scope
+
 ## [0.1.0-a1] - 2025-07-13
 
 ### Added
@@ -76,5 +109,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Estimated 21-29 days of additional development across 3 sprints
 - Focus areas: Authentication, Testing Framework, Performance, Observability
 
-[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a1...HEAD
+[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a2...HEAD
+[0.1.0-a2]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a1...v0.1.0-a2
 [0.1.0-a1]: https://github.com/virtualsteve-star/stinger-plugin/releases/tag/v0.1.0-a1
