@@ -86,6 +86,41 @@ async function testStreamingMode() {
   }
 }
 
+async function testCodeGeneration() {
+  console.log('Testing code generation detection...');
+  
+  const pythonCode = `Sure, here's a simple Python script that counts from 1 to 1000:
+
+\`\`\`python
+for i in range(1, 1001):
+    print(i)
+\`\`\`
+
+To run it, save as count_to_1000.py and run python count_to_1000.py`;
+
+  try {
+    const response = await fetch(`${API_BASE}/v1/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: pythonCode,
+        kind: "response",
+        mode: "streaming_final",
+        preset: "demo_showcase"
+      })
+    });
+    const data = await response.json();
+    console.log('Code generation result:', data);
+    console.log('Guardrails triggered:', data.metadata.guardrails_triggered);
+    console.log('Action:', data.action);
+    console.log('Warnings:', data.warnings);
+    return true;
+  } catch (error) {
+    console.error('❌ Code generation test failed:', error);
+    return false;
+  }
+}
+
 async function runAllTests() {
   console.log('🚀 Starting Phase 15 API tests...\n');
   
@@ -93,7 +128,8 @@ async function runAllTests() {
     testHealthCheck,
     testSimpleGuardrail,
     testInputBlocking,
-    testStreamingMode
+    testStreamingMode,
+    testCodeGeneration
   ];
   
   let passed = 0;

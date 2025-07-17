@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Stinger Extension</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        #log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Stinger Extension Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Extension Status</h2>
+        <p>Check if the Stinger extension is loaded and active.</p>
+        <button onclick="checkExtension()">Check Extension</button>
+        <div id="extension-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Response Interceptor</h2>
+        <p>This simulates ChatGPT-like DOM structure.</p>
+        <button onclick="simulateChatGPTResponse()">Simulate ChatGPT Response</button>
+        
+        <!-- Simulated chat area -->
+        <div id="chat-container" style="margin-top: 20px;">
+            <main role="main">
+                <div class="conversation">
+                    <!-- Messages will be added here -->
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        // Override console.log to capture extension logs
+        const originalLog = console.log;
+        const logDiv = document.getElementById('log');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = args.join(' ');
+            
+            // Color code based on content
+            if (args.join(' ').includes('[Stinger')) {
+                entry.className += ' info';
+            } else if (args.join(' ').includes('Error')) {
+                entry.className += ' error';
+            } else if (args.join(' ').includes('✅')) {
+                entry.className += ' success';
+            }
+            
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        function checkExtension() {
+            const statusDiv = document.getElementById('extension-status');
+            
+            // Check for Stinger classes
+            const stingerElements = document.querySelectorAll('[class*="stinger"]');
+            
+            // Check if any Stinger styles are loaded
+            const hasStingerStyles = Array.from(document.styleSheets).some(sheet => {
+                try {
+                    return sheet.cssRules && Array.from(sheet.cssRules).some(rule => 
+                        rule.cssText && rule.cssText.includes('stinger')
+                    );
+                } catch (e) {
+                    return false;
+                }
+            });
+            
+            if (stingerElements.length > 0 || hasStingerStyles) {
+                statusDiv.innerHTML = '<p class="success">✅ Stinger extension appears to be loaded</p>';
+                console.log('✅ Found Stinger elements or styles');
+            } else {
+                statusDiv.innerHTML = '<p class="error">❌ Stinger extension not detected</p>';
+                console.log('❌ No Stinger elements or styles found');
+            }
+            
+            // Log what we found
+            console.log('Stinger elements found:', stingerElements.length);
+            console.log('Has Stinger styles:', hasStingerStyles);
+        }
+
+        function simulateChatGPTResponse() {
+            console.log('Simulating ChatGPT response...');
+            
+            const conversation = document.querySelector('.conversation');
+            
+            // Create a message group (similar to ChatGPT structure)
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'group w-full';
+            
+            // Create assistant message container
+            const assistantMessage = document.createElement('div');
+            assistantMessage.setAttribute('data-message-author-role', 'assistant');
+            
+            // Add ChatGPT indicator
+            const header = document.createElement('div');
+            header.textContent = 'ChatGPT';
+            assistantMessage.appendChild(header);
+            
+            // Add message content with code
+            const content = document.createElement('div');
+            content.className = 'markdown';
+            content.innerHTML = `
+                <p>Here's a Python function to calculate factorial:</p>
+                <pre><code class="language-python">def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    else:
+        return n * factorial(n - 1)
+
+# Test dangerous operations
+import os
+os.system("echo This could be dangerous")</code></pre>
+                <p>This function uses recursion.</p>
+            `;
+            
+            assistantMessage.appendChild(content);
+            messageGroup.appendChild(assistantMessage);
+            conversation.appendChild(messageGroup);
+            
+            console.log('Added simulated ChatGPT response with code');
+            
+            // Trigger mutation
+            messageGroup.dispatchEvent(new Event('DOMNodeInserted', { bubbles: true }));
+        }
+
+        // Initial check when page loads
+        window.addEventListener('load', () => {
+            console.log('Test page loaded');
+            setTimeout(checkExtension, 1000);
+        });
+    </script>
+</body>
+</html>

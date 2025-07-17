@@ -1,21 +1,19 @@
 /**
- * Response Interceptor - Captures and checks LLM responses after streaming
+ * Debug version of Response Interceptor with logging enabled
  */
 
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { loggers } from '../../shared/logging/Logger';
 import { StingerOverlay } from '../ui/overlay';
-import { conversationManager } from '../utils/conversation-manager';
 
 const logger = loggers.content;
 
-export class ResponseInterceptor {
+export class ResponseInterceptorDebug {
   private overlay: StingerOverlay;
   private isMonitoring = false;
   private mutationObserver: MutationObserver | null = null;
   private processedMessages = new WeakSet<Element>();
-  private processingContent = new Set<string>(); // Track content being processed
-  private blockedMessages = new WeakSet<Element>(); // Track blocked messages
+  private messageCount = 0;
 
   constructor() {
     this.overlay = new StingerOverlay();
@@ -26,11 +24,11 @@ export class ResponseInterceptor {
    */
   start(): void {
     if (this.isMonitoring) {
-      // Removed debug log for production
+      console.log('[Stinger Debug] Already monitoring');
       return;
     }
 
-    // Removed info log for production
+    console.log('[Stinger Debug] Starting response interceptor');
     this.isMonitoring = true;
 
     // Watch for new assistant messages
@@ -43,7 +41,7 @@ export class ResponseInterceptor {
   stop(): void {
     if (!this.isMonitoring) return;
 
-    // Removed info log for production
+    console.log('[Stinger Debug] Stopping response interceptor');
     this.isMonitoring = false;
 
     if (this.mutationObserver) {
@@ -59,15 +57,28 @@ export class ResponseInterceptor {
     // Find the chat container
     const chatContainer = this.findChatContainer();
     if (!chatContainer) {
-      logger.warn('Chat container not found, retrying in 1s');
+      console.log('[Stinger Debug] Chat container not found, retrying in 1s');
       setTimeout(() => this.startMutationObserver(), 1000);
       return;
     }
 
+    console.log('[Stinger Debug] Found chat container:', {
+      tag: chatContainer.tagName,
+      class: chatContainer.className,
+      id: chatContainer.id
+    });
+
     this.mutationObserver = new MutationObserver((mutations) => {
+      console.log(`[Stinger Debug] Mutation detected, ${mutations.length} mutations`);
+      
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node instanceof Element) {
+            console.log('[Stinger Debug] New element added:', {
+              tag: node.tagName,
+              class: node.className,
+              textPreview: node.textContent?.substring(0, 50) + '...'
+            });
             this.checkForAssistantMessage(node);
           }
         }
@@ -79,7 +90,7 @@ export class ResponseInterceptor {
       subtree: true,
     });
 
-    // Removed info log for production
+    console.log('[Stinger Debug] Mutation observer started');
   }
 
   /**
@@ -92,6 +103,7 @@ export class ResponseInterceptor {
     for (const selector of selectors) {
       const element = document.querySelector(selector);
       if (element) {
+        console.log(`[Stinger Debug] Found container with selector: ${selector}`);
         return element;
       }
     }
@@ -108,68 +120,74 @@ export class ResponseInterceptor {
       return;
     }
 
-    // Find the actual message element (not containers)
-    let messageElement: Element | null = null;
-    
-    // Direct assistant message element
-    if (element.getAttribute('data-message-author-role') === 'assistant') {
-      messageElement = element;
-    } else {
-      // Look for assistant message within this element
-      messageElement = element.querySelector('[data-message-author-role="assistant"]');
+    // Check various indicators
+    const checks = {
+      hasAssistantClass: element.classList.toString().includes('assistant'),
+      hasAssistantRole: !!element.querySelector('[data-message-author-role="assistant"]'),
+      hasChatGPTText: element.textContent?.includes('ChatGPT') || false,
+      hasPrevChatGPT: element.previousElementSibling?.textContent?.includes('ChatGPT') || false,
+      isGroupWithAssistant: element.classList.contains('group') && !!element.querySelector('[data-message-author-role="assistant"]'),
+      hasAssistantParent: !!element.closest('[data-message-author-role="assistant"]'),
+      hasChatGPTAvatar: !!element.querySelector('img[alt*="ChatGPT"]'),
+      isGroupWithoutUser: element.classList.contains('group') && 
+                         element.classList.contains('w-full') && 
+                         !element.querySelector('[data-message-author-role="user"]')
+    };
+
+    console.log('[Stinger Debug] Assistant message checks:', checks);
+
+    const isAssistantMessage = Object.values(checks).some(v => v);
+
+    if (!isAssistantMessage) {
+      // Also check if this element contains assistant message content
+      const assistantChild = element.querySelector('[data-message-author-role="assistant"]');
+      if (!assistantChild) {
+        console.log('[Stinger Debug] Not an assistant message, skipping');
+        return;
+      }
     }
 
-    if (!messageElement) {
-      return;
-    }
-
-    // Skip if we've already processed this specific message
-    if (this.processedMessages.has(messageElement)) {
-      return;
-    }
-
-    // Mark both the container and message as processed
+    console.log('[Stinger Debug] Found assistant message!');
     this.processedMessages.add(element);
-    this.processedMessages.add(messageElement);
+    this.messageCount++;
 
     // Wait for streaming to complete
-    this.waitForStreamingCompletion(messageElement);
+    this.waitForStreamingCompletion(element);
   }
 
   /**
    * Wait for streaming to complete before checking
    */
   private waitForStreamingCompletion(messageElement: Element): void {
+    console.log('[Stinger Debug] Waiting for streaming to complete...');
+    
     let lastContent = '';
     let stableCount = 0;
     const requiredStableChecks = 3; // 300ms of stable content
 
     const checkInterval = setInterval(async () => {
-      // Stop monitoring if message was blocked
-      if (this.blockedMessages.has(messageElement) || messageElement.classList.contains('stinger-blocked-response')) {
-        clearInterval(checkInterval);
-        return;
-      }
-
       const currentContent = messageElement.textContent || '';
 
       if (currentContent === lastContent) {
         stableCount++;
+        console.log(`[Stinger Debug] Content stable for ${stableCount * 100}ms`);
 
         if (stableCount >= requiredStableChecks) {
           clearInterval(checkInterval);
-          // Removed info log for production
+          console.log('[Stinger Debug] Streaming complete, checking response');
           await this.checkResponse(messageElement, currentContent);
         }
       } else {
         stableCount = 0;
         lastContent = currentContent;
+        console.log('[Stinger Debug] Content still changing, resetting counter');
       }
     }, 100);
 
     // Timeout after 30 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
+      console.log('[Stinger Debug] Timeout reached, forcing check');
     }, 30000);
   }
 
@@ -178,57 +196,35 @@ export class ResponseInterceptor {
    */
   private async checkResponse(messageElement: Element, content: string): Promise<void> {
     if (!content.trim()) {
+      console.log('[Stinger Debug] Empty content, skipping');
       return;
     }
-
-    // Skip if this is our own blocked content message
-    if (content === 'I cannot provide that information due to safety policies.') {
-      return;
-    }
-
-    // Skip if already marked as blocked
-    if (messageElement.classList.contains('stinger-blocked-response')) {
-      return;
-    }
-
-    // Skip if we're already processing this content
-    const contentHash = content.substring(0, 100); // Use first 100 chars as simple hash
-    if (this.processingContent.has(contentHash)) {
-      return;
-    }
-    this.processingContent.add(contentHash);
 
     try {
+      console.log('[Stinger Debug] Checking response with Stinger API:', {
+        contentLength: content.length,
+        hasCode: messageElement.querySelector('code') !== null,
+        messageNumber: this.messageCount
+      });
+
       // Check output with streaming_final mode
-      // Use conversation ID from conversation manager
-      await conversationManager.recordResponse();
-      const context = await conversationManager.getApiContext();
-      
-      // Checking response with conversation context
-      const result = await stingerClientV2.checkOutput(content, context.conversation_id, context.userId);
+      const conversationId = `chrome_ext_${Date.now()}`;
+      const result = await stingerClientV2.checkOutput(content, conversationId);
+
+      console.log('[Stinger Debug] API Response:', result);
 
       if (result.action === 'block') {
-        logger.warn('Response blocked:', result.reasons);
+        console.log('[Stinger Debug] Response BLOCKED:', result.reasons);
         this.replaceBlockedContent(messageElement, result.reasons);
       } else if (result.warnings.length > 0) {
-        // Only add warning if not already present
-        if (!messageElement.querySelector('.stinger-warning-icon')) {
-          logger.warn('Response has warnings:', result.warnings);
-          this.addWarningIndicator(messageElement, result.warnings);
-        }
+        console.log('[Stinger Debug] Response has WARNINGS:', result.warnings);
+        this.addWarningIndicator(messageElement, result.warnings);
+      } else {
+        console.log('[Stinger Debug] Response ALLOWED');
       }
     } catch (error) {
-      logger.error('Error checking response:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        contentLength: content.length,
-      });
+      console.error('[Stinger Debug] Error checking response:', error);
       // Fail open - don't block on errors
-    } finally {
-      // Clean up after a delay
-      setTimeout(() => {
-        this.processingContent.delete(contentHash);
-      }, 5000);
     }
   }
 
@@ -236,8 +232,7 @@ export class ResponseInterceptor {
    * Replace blocked content with safe message
    */
   private replaceBlockedContent(messageElement: Element, reasons: string[]): void {
-    // Mark as blocked to prevent re-processing
-    this.blockedMessages.add(messageElement);
+    console.log('[Stinger Debug] Replacing blocked content');
     
     // Store original content as data attribute
     messageElement.setAttribute('data-original-content', messageElement.textContent || '');
@@ -262,6 +257,8 @@ export class ResponseInterceptor {
    * Add warning indicator to message
    */
   private addWarningIndicator(messageElement: Element, warnings: string[]): void {
+    console.log('[Stinger Debug] Adding warning indicator');
+    
     // Add warning class
     messageElement.classList.add('stinger-warning-response');
 
@@ -276,40 +273,5 @@ export class ResponseInterceptor {
   }
 }
 
-// Add styles for blocked/warning indicators
-const style = document.createElement('style');
-style.textContent = `
-  .stinger-blocked-response {
-    opacity: 0.6;
-    position: relative;
-  }
-  
-  .stinger-block-tooltip {
-    position: absolute;
-    top: -30px;
-    left: 0;
-    background: #ff4444;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    display: none;
-  }
-  
-  .stinger-blocked-response:hover .stinger-block-tooltip {
-    display: block;
-  }
-  
-  .stinger-warning-response {
-    border-left: 3px solid #ff9800 !important;
-    padding-left: 10px !important;
-    margin-left: 0 !important;
-  }
-  
-  .stinger-warning-icon {
-    margin-right: 8px;
-    cursor: help;
-  }
-`;
-document.head.appendChild(style);
+// Export debug version
+(window as any).StingerResponseInterceptorDebug = ResponseInterceptorDebug;

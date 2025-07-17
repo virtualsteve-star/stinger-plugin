@@ -8,6 +8,7 @@ import { getPromptInput, getSubmitButton } from '../selectors/chatgpt';
 import { StingerOverlay } from '../ui/overlay';
 import { ProgressiveSecurityFeedback } from '../ui/ProgressiveSecurityFeedback';
 import { StingerSSEClient } from '../../shared/api/StingerSSEClient';
+import { conversationManager } from '../utils/conversation-manager';
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { UI_CONFIG, SECURITY_CONFIG } from '../../shared/constants';
 import type { CheckPromptMessage, CheckResultMessage } from '../../shared/types/messages';
@@ -370,9 +371,12 @@ export class PromptInterceptor {
       // Removed info log for production
 
       // Check input with default mode (full protection)
-      // Generate conversation ID from tab/session
-      const conversationId = `chrome_ext_${Date.now()}`;
-      const result = await stingerClientV2.checkInput(promptText, conversationId);
+      // Record prompt in conversation manager
+      await conversationManager.recordPrompt(promptText);
+      const context = await conversationManager.getApiContext();
+      
+      // Checking prompt with conversation context
+      const result = await stingerClientV2.checkInput(promptText, context.conversation_id, context.userId);
 
       // Handle result
       this.handleAnalysisResult(result.action === 'block', result.warnings, result.reasons);
