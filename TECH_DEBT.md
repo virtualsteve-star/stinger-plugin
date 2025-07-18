@@ -24,7 +24,12 @@ This document tracks technical debt items that need to be addressed post-release
    - Console error spy not capturing logs correctly
    - Cleanup test timing out at 1000ms
 
-**Root Cause**: Tests were written early in development and became stale as implementation evolved. Test mocking strategy needs overhaul.
+4. **SSE Streaming Tests**: DOM mocking issues (PARTIALLY FIXED)
+   - ✅ TextDecoder polyfill fixed for StingerSSEClient (19 tests passing)
+   - ❌ Mock DOM/timers complex for ProgressiveSecurityFeedback (18 tests still skipped)
+   - Need proper JSDOM setup for DOM manipulation tests
+
+**Root Cause**: Tests were written early in development and became stale as implementation evolved. Test mocking strategy needs overhaul. SSE tests need proper polyfills for Node.js environment.
 
 **Action Plan**:
 1. **Phase 1**: Refactor MessageBus constructor mocking in background tests

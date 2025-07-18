@@ -1,6 +1,6 @@
 import { MessageBus } from '../../extension/src/shared/messaging/MessageBus';
 import { storageService } from '../../extension/src/shared/storage/StorageService';
-import { stingerClient } from '../../extension/src/shared/api/StingerClient';
+import { stingerClientV2 } from '../../extension/src/shared/api/StingerClientV2';
 import { loggers } from '../../extension/src/shared/logging/Logger';
 import type {
   ContentLoadedMessage,
@@ -13,14 +13,14 @@ import type { CheckRequest, CheckResponse } from '../../extension/src/shared/typ
 // Mock dependencies
 jest.mock('../../extension/src/shared/messaging/MessageBus');
 jest.mock('../../extension/src/shared/storage/StorageService');
-jest.mock('../../extension/src/shared/api/StingerClient');
+jest.mock('../../extension/src/shared/api/StingerClientV2');
 jest.mock('../../extension/src/shared/logging/Logger');
 
 // TODO: Issue #8 - Fix MessageBus constructor mocking issues  
 describe.skip('Background Service Worker', () => {
   let mockMessageBus: jest.Mocked<MessageBus>;
   let mockStorageService: jest.Mocked<typeof storageService>;
-  let mockStingerClient: jest.Mocked<typeof stingerClient>;
+  let mockStingerClientV2: jest.Mocked<typeof stingerClientV2>;
   let mockLogger: any;
   
   // Handler functions we'll capture

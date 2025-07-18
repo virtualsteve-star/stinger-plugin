@@ -78,6 +78,44 @@ export class StingerOverlay {
   }
 
   /**
+   * Show a blocked notification (toast-style)
+   */
+  showBlockedNotification(reasons: string[]): void {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #DC2626;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: ${UI_CONFIG.OVERLAY_Z_INDEX + 1};
+      max-width: 400px;
+      font-family: -apple-system, system-ui, sans-serif;
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    toast.innerHTML = `
+      <div style="display: flex; align-items: center;">
+        <span style="font-size: 20px; margin-right: 12px;">🚫</span>
+        <div>
+          <div style="font-weight: 600; margin-bottom: 4px;">Content Blocked</div>
+          <div style="font-size: 14px; opacity: 0.9;">${reasons.join(', ')}</div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      toast.remove();
+    }, 5000);
+  }
+
+  /**
    * Show a block message
    */
   showBlock(reasons: string[]): void {

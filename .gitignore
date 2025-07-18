@@ -74,3 +74,6 @@ test-results/
 *.bak
 *.orig
 .history/
+
+# Agent Communication System
+AgentMail/

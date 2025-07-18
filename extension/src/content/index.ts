@@ -7,19 +7,23 @@ import { loggers } from '../shared/logging/Logger';
 import { ChatGPTDOMObserver } from './observers/dom-observer';
 import { PromptInterceptor } from './interceptors/prompt-interceptor';
 import { ResponseMonitor } from './interceptors/response-monitor';
+import { ResponseInterceptor } from './interceptors/response-interceptor';
 import type { ContentLoadedMessage } from '../shared/types/messages';
 
 const logger = loggers.content;
 const messageBus = new MessageBus();
 
+// Simple DOM-based interception approach
+
 // Components
 let domObserver: ChatGPTDOMObserver | null = null;
 let promptInterceptor: PromptInterceptor | null = null;
 let responseMonitor: ResponseMonitor | null = null;
+let responseInterceptor: ResponseInterceptor | null = null;
 
 // Initialize Stinger Guard
 async function initializeStingerGuard() {
-  logger.info('Initializing Stinger Guard...');
+  // Removed info log for production
 
   try {
     // Notify background that content script is loaded
@@ -32,7 +36,7 @@ async function initializeStingerGuard() {
     };
 
     const response = await messageBus.send<ContentLoadedMessage>(message);
-    logger.debug('Background response:', response);
+    // Removed debug log for production
 
     // Set up prompt interception
     setupPromptInterception();
@@ -43,7 +47,7 @@ async function initializeStingerGuard() {
     // Set up DOM observation
     setupDOMObservation();
 
-    logger.info('Stinger Guard initialized successfully');
+    // Removed info log for production
   } catch (error) {
     logger.error('Failed to initialize Stinger Guard', error);
   }
@@ -51,7 +55,7 @@ async function initializeStingerGuard() {
 
 // Set up prompt interception
 function setupPromptInterception() {
-  logger.debug('Setting up prompt interception...');
+  // Removed debug log for production
 
   promptInterceptor = new PromptInterceptor(messageBus);
   promptInterceptor.start();
@@ -59,23 +63,27 @@ function setupPromptInterception() {
 
 // Set up response monitoring
 function setupResponseMonitoring() {
-  logger.debug('Setting up response monitoring...');
+  // Removed debug log for production
 
   responseMonitor = new ResponseMonitor(messageBus);
+
+  // Also set up Phase 15 response interceptor
+  responseInterceptor = new ResponseInterceptor();
+  responseInterceptor.start();
 }
 
 // Set up DOM observation
 function setupDOMObservation() {
-  logger.debug('Setting up DOM observation...');
+  // Removed debug log for production
 
   domObserver = new ChatGPTDOMObserver({
     onNewUserMessage: (_text) => {
-      logger.debug('New user message detected via DOM observation');
+      // Removed debug log for production
       // The prompt interceptor handles checking before submission
     },
 
     onNewAssistantMessage: (text) => {
-      logger.debug('New assistant message detected');
+      // Removed debug log for production
       if (responseMonitor) {
         responseMonitor.resetForNewMessage();
         responseMonitor.checkResponse(text);
@@ -83,18 +91,18 @@ function setupDOMObservation() {
     },
 
     onAssistantMessageUpdate: (text) => {
-      logger.debug('Assistant message updated');
+      // Removed debug log for production
       if (responseMonitor) {
         responseMonitor.checkResponse(text);
       }
     },
 
     onGenerationStart: () => {
-      logger.debug('Response generation started');
+      // Removed debug log for production
     },
 
     onGenerationEnd: () => {
-      logger.debug('Response generation ended');
+      // Removed debug log for production
     },
   });
 
@@ -103,7 +111,7 @@ function setupDOMObservation() {
 
 // Clean up on unload
 window.addEventListener('unload', () => {
-  logger.info('Content script unloading, cleaning up...');
+  // Removed info log for production
 
   if (domObserver) {
     domObserver.stop();
@@ -112,21 +120,21 @@ window.addEventListener('unload', () => {
   if (promptInterceptor) {
     promptInterceptor.stop();
   }
+
+  if (responseInterceptor) {
+    responseInterceptor.stop();
+  }
 });
 
 // Log initial state
-logger.info('Content script loaded', {
-  url: window.location.href,
-  readyState: document.readyState,
-  timestamp: new Date().toISOString(),
-});
+// Removed info log for production
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
-  logger.info('Waiting for DOMContentLoaded...');
+  // Removed info log for production
   document.addEventListener('DOMContentLoaded', initializeStingerGuard);
 } else {
   // Give ChatGPT a moment to fully render
-  logger.info('DOM ready, initializing in 1 second...');
+  // Removed info log for production
   setTimeout(initializeStingerGuard, 1000);
 }

@@ -2,7 +2,6 @@
  * Rules Manager - Handles synchronization of policy rules from Stinger API
  */
 
-import { stingerClient } from '../api/StingerClient';
 import { storageService } from '../storage/StorageService';
 import { loggers } from '../logging/Logger';
 import type { PolicyRules } from '../types/storage';
@@ -47,40 +46,9 @@ export class RulesManager {
    * Sync rules from API
    */
   async syncRules(): Promise<void> {
-    try {
-      logger.debug('Syncing rules from API');
-
-      const result = await stingerClient.getRules();
-
-      if (result.success) {
-        const rules: PolicyRules = {
-          version: result.data.version,
-          preset: result.data.preset,
-          guardrails: result.data.guardrails,
-          lastUpdated: Date.now(),
-        };
-
-        // Check if rules have changed
-        const currentRules = await storageService.getRules();
-        if (currentRules?.version !== rules.version) {
-          logger.info('Rules updated', {
-            oldVersion: currentRules?.version,
-            newVersion: rules.version,
-          });
-
-          await storageService.updateRules(rules);
-
-          // Notify content scripts of rule update
-          this.notifyRuleUpdate(rules);
-        } else {
-          logger.debug('Rules unchanged');
-        }
-      } else {
-        logger.error('Failed to sync rules', result.error);
-      }
-    } catch (error) {
-      logger.error('Error syncing rules', error);
-    }
+    // Skip sync for Phase 15 API - uses presets instead
+    logger.debug('Rules sync skipped - Phase 15 API uses presets');
+    return;
   }
 
   /**
@@ -105,32 +73,6 @@ export class RulesManager {
   private isRulesFresh(rules: PolicyRules): boolean {
     const age = Date.now() - rules.lastUpdated;
     return age < this.SYNC_INTERVAL;
-  }
-
-  /**
-   * Notify all tabs about rule updates
-   */
-  private async notifyRuleUpdate(rules: PolicyRules): Promise<void> {
-    const tabs = await chrome.tabs.query({
-      url: ['https://chat.openai.com/*', 'https://chatgpt.com/*'],
-    });
-
-    for (const tab of tabs) {
-      if (tab.id) {
-        try {
-          await chrome.tabs.sendMessage(tab.id, {
-            type: 'RULES_UPDATED',
-            payload: {
-              version: rules.version,
-              preset: rules.preset,
-            },
-          });
-        } catch (error) {
-          // Tab might not have content script loaded
-          logger.debug('Failed to notify tab', { tabId: tab.id, error });
-        }
-      }
-    }
   }
 
   /**

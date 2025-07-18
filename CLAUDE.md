@@ -1,186 +1,225 @@
-# CLAUDE.md
+# Claude Development Instructions - Stinger Chrome Extension
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 🎯 Project Overview
 
-## Project Overview
+This is the **Stinger Chrome Extension** project - a browser security plugin that provides real-time guardrail checks for LLM interactions. The extension intercepts user prompts and responses, analyzes them through the Stinger API, and provides security feedback.
 
-Stinger Guard is a Chrome Extension (Manifest V3) that monitors and enforces security guardrails for prompts and responses on ChatGPT. This MVP implementation intercepts LLM traffic and routes it to the Stinger API for audit logging and policy enforcement.
+**Current Status**: v0.1.0-a1 (Alpha release) with **SSE streaming integration in progress**
 
-### Current Status
-- ✅ Phase 1 Complete: Project setup with TypeScript, Vite, Jest, and Chrome extension structure
-- ✅ Phase 2 Complete: Core infrastructure (messaging, storage, API client, logging)
-- ✅ Phase 3 Complete: Content Script Development for ChatGPT integration
-- ✅ **MVP Complete**: Working Chrome extension with prompt interception, API integration, and UI
-- ✅ CI/CD Pipeline: GitHub Actions with cross-platform testing and quality checks
-- ✅ Post-Release Planning: 5 detailed RFEs filed for future enhancements
+## 📋 Current Development Phase
 
-## Development Commands
+### **🚀 ACTIVE: SSE Streaming Integration**
 
+**Status**: ✅ **All integration blockers resolved - ready for implementation**
+
+**Objective**: Transform batch security checks into real-time streaming for 20x UX improvement
+
+**Key Integration Points**:
+- **Content Script Direct SSE**: Recommended architecture by Core Engineering
+- **Progress Indicators**: 500ms timeout-based approach for UX
+- **Chrome Extension Headers**: X-Tab-ID, X-Session-ID, X-Extension-Version
+- **Graceful Fallback**: SSE → Batch → Local validation → Allow with warning
+
+**Implementation Plan**: See `/docs/plans/SSE_STREAMING_INTEGRATION_PLAN.md`
+
+## 🏗️ Architecture Overview
+
+### **Chrome Extension Structure**
+```
+extension/
+├── src/
+│   ├── background/          # Service worker (Manifest V3)
+│   ├── content/            # Content scripts for web page interaction
+│   ├── popup/              # Extension popup UI
+│   └── shared/             # Shared utilities and types
+```
+
+### **Key Components**
+- **PromptInterceptor**: Captures and analyzes user prompts before submission
+- **StingerClient**: API client for security analysis (batch mode)
+- **StingerSSEClient**: NEW - Real-time streaming client 
+- **MessageBus**: Chrome extension messaging system
+- **StorageService**: Configuration and cache management
+
+## 🔧 Development Guidelines
+
+### **Code Standards**
+- **TypeScript**: All code in TypeScript with strict type checking
+- **No Comments**: Do not add code comments unless explicitly requested
+- **Chrome Manifest V3**: Service workers, not background pages
+- **Security First**: Never log sensitive data or expose credentials
+
+### **Testing Requirements**
+- **Unit Tests**: Jest for shared utilities and API clients
+- **Integration Tests**: Chrome extension lifecycle testing
+- **Manual Testing**: Real ChatGPT.com integration testing
+- **Performance Testing**: <100ms first response target for streaming
+
+### **File Organization**
+- **Tests**: Keep tests in `/tests/` directory
+- **Documentation**: Use `/docs/` for all documentation
+- **Plans**: Store planning documents in `/docs/plans/`
+
+## 🚨 Critical Technical Notes
+
+### **Chrome Extension Specifics**
+- **Service Worker Context**: No `window` object, use Chrome APIs
+- **Content Script Context**: Full DOM access, can use EventSource directly
+- **CORS**: Backend configured for extension origins
+- **CSP**: Content Security Policy compatible with SSE streaming
+
+### **Security Considerations**
+- **No Credential Storage**: Never store API keys in extension
+- **Fail-Open Pattern**: Allow with warning if security checks fail
+- **User Privacy**: No data collection beyond security analysis
+- **Audit Logging**: Handled server-side, not locally
+
+### **Performance Requirements**
+- **Streaming Target**: <100ms first feedback (vs 3-5s batch)
+- **Memory Management**: Bounded cache with LRU eviction
+- **Network Efficiency**: Minimize API calls through intelligent caching
+- **Battery Impact**: Optimize for mobile browser usage
+
+## 🔄 Current Integration Status
+
+### **Core Engineering Collaboration**
+✅ **EventSource Architecture**: Content script direct SSE recommended  
+✅ **Progress Indicators**: Simple timeout-based solution provided  
+✅ **Backend Ready**: `/api/v1/stream/analyze` endpoint fully configured  
+✅ **CORS Configured**: Chrome extension origins supported  
+✅ **Headers Supported**: All extension metadata processed  
+
+### **QA Validation**
+✅ **Load Testing**: 100% success rate across scenarios  
+✅ **Critical Issues**: Conversation limit handling resolved  
+✅ **Production Readiness**: All blocking issues addressed  
+
+## 🛠️ Development Commands
+
+### **Build & Test**
 ```bash
-# Install dependencies (auto-builds extension)
+# Install dependencies
 npm install
 
-# Development
-npm run dev              # Start Vite dev server
-npm run build:watch      # Rebuild on file changes
-
-# Building
-npm run build           # Production build to dist/
-
-# Testing
-npm run test            # Run Jest unit tests (with typecheck pre-check)
-npm run test:watch      # Jest in watch mode
-npm run test:e2e        # Run Playwright E2E tests
-
-# Code Quality
-npm run lint            # ESLint on extension/src
-npm run format          # Prettier formatting
-npm run typecheck       # TypeScript type checking
-
-# CI Pipeline
-npm run ci              # Full validation (typecheck, lint, test, build)
-
-# Loading in Chrome
-1. Run `npm run build`
-2. Open chrome://extensions/
-3. Enable "Developer mode"
-4. Click "Load unpacked"
-5. Select the `dist` directory
-```
-
-## Quick Build & Test
-
-When making changes to the extension:
-```bash
-# Build the extension
+# Build extension
 npm run build
 
-# Then reload in Chrome:
-# 1. Go to chrome://extensions/
-# 2. Find "Stinger Guard Plugin"
-# 3. Click the refresh/reload icon
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Type checking  
+npm run typecheck
 ```
 
-## Test the Stinger API Connection
-
+### **Manual Testing**
 ```bash
-# Ensure Stinger API is running on port 8888
-node tests/test-api.js        # Test API endpoints
-node tests/test-conversation.js  # Test conversation tracking
+# Test API integration
+node test-api.js
+
+# Test conversation tracking
+node test-conversation.js
+
+# Load extension in Chrome
+# 1. chrome://extensions/
+# 2. Enable Developer mode
+# 3. Load unpacked: /path/to/extension/dist
 ```
 
-## Architecture Overview
+## 📁 Important Files
 
-The extension consists of three main components:
+### **Extension Core**
+- `/extension/manifest.json` - Chrome extension configuration
+- `/extension/src/background/index.ts` - Service worker entry point
+- `/extension/src/content/index.ts` - Content script entry point
+- `/extension/src/shared/api/StingerClient.ts` - Batch API client
+- `/extension/src/content/interceptors/prompt-interceptor.ts` - Prompt interception
 
-1. **Content Script** (`extension/content.ts`)
-   - Injected into target LLM websites (ChatGPT, Copilot)
-   - Intercepts user prompts before submission
-   - Monitors DOM for model responses
-   - Implements UI for warnings/blocks/redactions
+### **Configuration**
+- `/vite.config.ts` - Build configuration
+- `/tsconfig.json` - TypeScript configuration
+- `/.github/workflows/ci.yml` - CI/CD pipeline
+- `/TECH_DEBT.md` - Technical debt tracking
 
-2. **Background Service Worker** (`extension/bg.ts`)
-   - Handles communication with Stinger Policy API
-   - Manages audit logging and SIEM integration
-   - Performs policy synchronization
-   - Uses Chrome storage for queuing events
+### **Documentation**
+- `/README.md` - Project overview and installation
+- `/docs/plans/SSE_STREAMING_INTEGRATION_PLAN.md` - Current implementation plan
+- `/docs/plans/POST_RELEASE_ROADMAP.md` - Post-streaming roadmap
 
-3. **Stinger Policy API** (External microservice)
-   - Evaluates prompts/responses against security policies
-   - Returns verdicts: allow/warn/block
-   - Provides centralized policy management
+## 🔍 Debugging & Troubleshooting
 
-## Key Technical Decisions
+### **Chrome Extension Debugging**
+- **Background Script**: chrome://extensions/ → Inspect views: service worker
+- **Content Script**: Browser DevTools → Console (shows content script logs)
+- **Extension Storage**: DevTools → Application → Storage → Extension
+- **Network**: DevTools → Network (filter by domain)
 
-- **TypeScript 5** with ES2022 target
-- **Vite** with @crxjs/vite-plugin for Chrome extension bundling
-- **Chrome Extension Manifest V3** (service workers, not background pages)
-- **Jest** for unit testing with Chrome API mocks
-- **Playwright** for E2E testing
-- **Security-first design**: CSP hardening, isolated worlds, no eval
-- **Performance targets**: <250ms p95 for policy checks (MVP: <500ms)
+### **Common Issues**
+- **Service Worker Lifecycle**: May restart, losing in-memory state
+- **Content Script Injection**: Verify manifest permissions and URL matching
+- **CORS Issues**: Backend configured, but check request headers
+- **Message Passing**: Use chrome.runtime.sendMessage for service worker communication
 
-## Important Files and Locations
+## 🎯 Agent Communication System
 
-- `extension/` - Chrome extension source code
-  - `manifest.json` - Extension configuration
-  - `src/content/` - Content scripts (run on ChatGPT)
-  - `src/background/` - Service worker
-  - `src/shared/` - Shared types and utilities
-- `dist/` - Built extension (git-ignored, load this in Chrome)
-- `tests/` - Test files and scripts
-  - `test-api.js` - Stinger API validation script
-  - `test-conversation.js` - Conversation tracking test
-  - `unit/` - Jest unit tests
-- `docs/plans/` - Planning documents and roadmaps
-- `.env` - Local environment configuration
+### **Your Role: Stinger-Plugin Team Agent**
 
-## Development Workflow
+You are the official AI agent representing the **Stinger-Plugin Team** in the inter-agent communication system.
 
-1. **Starting Development**
-   ```bash
-   # Terminal 1: Start Stinger API (in stinger core repo)
-   # Terminal 2: Start build watcher
-   npm run build:watch
-   ```
+**Communication Protocol**:
+- **Incoming Messages**: Check `/AgentMail/stinger-plugin/` for messages from other teams
+- **Outgoing Messages**: Send responses to `/AgentMail/[team-name]/`
+- **Message Format**: Markdown files with clear subject lines and structured content
 
-2. **Making Changes**
-   - Edit files in `extension/src/`
-   - Build automatically updates
-   - Reload extension in Chrome (or use Extensions Reloader extension)
+**Key Collaborations**:
+- **stinger-core-eng**: Backend API integration and SSE streaming
+- **stinger-qa**: Testing validation and quality assurance
+- **stinger-pm**: Product management and manual testing validation
 
-3. **Testing Changes**
-   - Unit tests: `npm test`
-   - API tests: `node tests/test-api.js`
-   - Conversation tracking: `node tests/test-conversation.js`
-   - Manual testing: Visit https://chatgpt.com
-   - Check console for "Stinger Guard:" messages
+**Response Guidelines**:
+- Provide technical details and honest assessments
+- Request specific guidance when facing architectural decisions
+- Share integration progress and any blockers encountered
+- Maintain professional collaboration focused on delivery excellence
 
-4. **Before Committing**
-   - Run `npm run ci` to ensure all checks pass
-   - Test the built extension manually
+### **Agent Directory Structure**
+```
+AgentMail/
+├── stinger-core-eng/     # Backend engineering team communications
+├── stinger-plugin/       # Incoming messages for plugin team (us)
+├── stinger-qa/          # QA team communications
+└── stinger-pm/          # Product management communications
+```
 
-## Security Considerations
+**Note**: The core engineering team folder was renamed from `stinger-core-eng` to maintain clarity in agent communications.
 
-- All prompts/responses are hashed locally before storage
-- HTTPS with device certificates for API communication
-- Minimal Chrome permissions (no tab access, cookies, or file URLs)
-- Policy rules are signed with HMAC-SHA256
-- Fallback to "warn" mode on API timeout (>2s)
+## 🚀 Next Steps
 
-## Phase 2 Completed Features
+### **Immediate Priorities (This Week)**
+1. **Implement StingerSSEClient**: Direct SSE connection from content scripts
+2. **Add Progress Indicators**: 500ms timeout-based "Security scanning..." message
+3. **Update PromptInterceptor**: Integrate streaming analysis with existing interception
+4. **Test Chrome Integration**: Validate SSE works in real extension context
 
-### Core Infrastructure ✅
-- **Message Bus**: Type-safe message passing between content scripts and background worker
-- **Storage Service**: Abstraction layer for Chrome storage with caching and quota management
-- **API Client**: Stinger API client with retry logic and response caching
-- **Logging System**: Structured logging with different levels and buffering
-- **Type System**: Complete TypeScript types for messages, API, and storage
-- **Error Handling**: Centralized error handling with proper Chrome API error management
-- **Chrome Wrapper**: Safe wrappers for Chrome APIs with promise support
+### **Success Criteria**
+- **Performance**: <100ms first feedback (FAST guardrails)
+- **UX**: Progressive security analysis with clear progress indication
+- **Reliability**: Graceful fallback to batch mode if streaming fails
+- **Compatibility**: Works across ChatGPT, Claude, and other LLM sites
 
-### Testing Infrastructure ✅
-- Unit tests for all core components
-- Chrome API mocks for testing
-- 100% test passing rate
+### **Integration Validation**
+- **Unit Tests**: SSE client connection handling and error recovery
+- **Integration Tests**: End-to-end streaming with real ChatGPT
+- **Performance Tests**: Validate 20x UX improvement target
+- **User Experience**: Test progress indicators and transparency
 
-## Post-Release Roadmap
+---
 
-See `docs/plans/POST_RELEASE_ROADMAP.md` for detailed implementation plan with 5 filed RFEs:
+**Current Focus**: 🚀 **SSE Streaming Integration - Week 1**  
+**Timeline**: 1-2 weeks to production-ready streaming  
+**Impact**: 20x UX improvement - industry-leading streaming security  
+**Status**: All blockers resolved, ready for implementation
 
-1. **Issue #4: API Authentication** (High Priority, 5-7 days)
-   - JWT token management and secure API communications
-
-2. **Issue #7: Integration Testing Framework** (High Priority, 7-10 days) 
-   - End-to-end testing with Chrome extension lifecycle
-
-3. **Issue #3: Comprehensive Retry Logic** (Medium Priority, 2-3 days)
-   - Exponential backoff and circuit breaker patterns
-
-4. **Issue #6: LRU Cache Eviction** (Medium Priority, 3-4 days)
-   - Bounded memory usage and cache optimization
-
-5. **Issue #5: Enhanced Error Reporting** (Medium Priority, 4-5 days)
-   - Structured telemetry and user-friendly error messages
-
-**Total Estimated Effort**: 21-29 days across 3 development sprints
+*Remember: This streaming integration represents a major UX breakthrough. Focus on delivering the industry-leading real-time security experience that transforms user perception from "security blocking" to "security enabling."*

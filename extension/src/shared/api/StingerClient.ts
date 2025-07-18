@@ -26,7 +26,7 @@ export class StingerClient {
 
   constructor(config: Partial<ApiConfig> = {}) {
     this.config = {
-      baseUrl: process.env.STINGER_API_URL || 'http://localhost:8888',
+      baseUrl: process.env.STINGER_API_URL || 'http://localhost:8100',
       timeout: API_CONFIG.DEFAULT_TIMEOUT,
       maxRetries: API_CONFIG.MAX_RETRIES,
       ...config,

@@ -55,8 +55,8 @@ export enum StorageKeys {
 
 // Default values
 export const DEFAULT_CONFIG: ExtensionConfig = {
-  apiUrl: 'http://localhost:8888',
-  apiTimeout: 2000,
+  apiUrl: 'http://localhost:8100',
+  apiTimeout: 15000, // 15 seconds - increased for guardrail processing time
   debugMode: false,
   logLevel: 'info',
 };
