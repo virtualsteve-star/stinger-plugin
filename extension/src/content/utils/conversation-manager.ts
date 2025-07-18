@@ -92,6 +92,12 @@ export class ConversationManager {
     conversation.lastPrompt = prompt;
     conversation.lastPromptTime = Date.now();
     
+    logger.debug('Recording prompt in conversation', {
+      conversationId: conversation.conversationId,
+      userId: conversation.userId,
+      promptLength: prompt.length
+    });
+    
     // Update persistent storage
     await conversationStore.updateWithPrompt(prompt);
     
@@ -105,6 +111,12 @@ export class ConversationManager {
     const conversation = await this.getCurrentConversation();
     
     conversation.responseCount++;
+    
+    logger.debug('Recording response in conversation', {
+      conversationId: conversation.conversationId,
+      userId: conversation.userId,
+      responseCount: conversation.responseCount
+    });
     
     return conversation;
   }
@@ -124,7 +136,7 @@ export class ConversationManager {
   }> {
     const conversation = await this.getCurrentConversation();
     
-    return {
+    const context = {
       conversation_id: conversation.conversationId,
       userId: conversation.userId,
       sessionId: conversation.conversationId, // Use same as conversation ID for now
@@ -134,6 +146,14 @@ export class ConversationManager {
         last_prompt: conversation.lastPrompt
       }
     };
+    
+    logger.debug('Generated API context', {
+      conversationId: context.conversation_id,
+      userId: context.userId,
+      hasPrompt: !!conversation.lastPrompt
+    });
+    
+    return context;
   }
 
   /**
@@ -158,6 +178,14 @@ export class ConversationManager {
     const timeSinceLastPrompt = Date.now() - this.currentConversation.lastPromptTime;
     
     return timeSinceLastPrompt > thirtyMinutes;
+  }
+
+  /**
+   * Check if there's an active conversation with at least one prompt
+   * This prevents response checking from creating orphaned anonymous conversations
+   */
+  hasActiveConversation(): boolean {
+    return this.currentConversation !== null && this.currentConversation.lastPromptTime !== undefined;
   }
 }
 

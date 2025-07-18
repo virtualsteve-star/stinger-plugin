@@ -198,6 +198,13 @@ export class ResponseInterceptor {
     }
     this.processingContent.add(contentHash);
 
+    // Only check responses if there's an active conversation with prompts
+    // This prevents creating orphaned anonymous conversations
+    if (!conversationManager.hasActiveConversation()) {
+      logger.info('Skipping response check - no active conversation with prompts');
+      return;
+    }
+
     try {
       // Check output with streaming_final mode
       // Use conversation ID from conversation manager
