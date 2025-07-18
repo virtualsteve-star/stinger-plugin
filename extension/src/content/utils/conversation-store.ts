@@ -17,14 +17,12 @@ const STORAGE_KEY = 'current_conversation';
 const CONVERSATION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 export class ConversationStore {
-  private chrome = new ChromeWrapper();
-
   /**
    * Get current conversation from storage
    */
   async getCurrentConversation(): Promise<StoredConversation | null> {
     try {
-      const result = await this.chrome.storage.local.get(STORAGE_KEY);
+      const result = await ChromeWrapper.storage.get(STORAGE_KEY);
       const conversation = result[STORAGE_KEY] as StoredConversation | undefined;
       
       if (!conversation) {
@@ -51,7 +49,7 @@ export class ConversationStore {
    */
   async saveConversation(conversation: StoredConversation): Promise<void> {
     try {
-      await this.chrome.storage.local.set({
+      await ChromeWrapper.storage.set({
         [STORAGE_KEY]: conversation
       });
     } catch (error) {
@@ -76,7 +74,7 @@ export class ConversationStore {
    */
   async clearConversation(): Promise<void> {
     try {
-      await this.chrome.storage.local.remove(STORAGE_KEY);
+      await ChromeWrapper.storage.remove(STORAGE_KEY);
     } catch (error) {
       console.error('Failed to clear conversation:', error);
     }

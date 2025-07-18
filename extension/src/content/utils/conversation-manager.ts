@@ -64,7 +64,7 @@ export class ConversationManager {
 
     // Create new conversation
     const newConversationId = `chrome_ext_${Date.now()}`;
-    // Creating new conversation
+    logger.info(`New conversation created: ${newConversationId}`);
     
     this.currentConversation = {
       conversationId: newConversationId,

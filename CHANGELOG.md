@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Chrome Storage Access** - Fixed undefined error when saving conversations (BUG-001)
+
 ## [0.1.0-a2] - 2025-07-17
 
 ### Added
