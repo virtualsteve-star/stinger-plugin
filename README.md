@@ -51,13 +51,13 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 │   Content Script   │──────────▶│  Background Service Worker    │
 │ (UI interception)  │  message  │  (config & storage)           │
 │        +           │            └───────────────────────────────┘
-│  SSE Streaming     │                          
-│    Connection      │◀──────────────SSE────────────────────────────┐
+│  Phase 15 API     │                          
+│    Integration     │◀──────────────HTTP───────────────────────────┐
 └─────────┬──────────┘                                              │
           │DOM mut.                                                 │
           ▼                                                         ▼
- Web page (ChatGPT)              Stinger SSE API  ➜  Real-time Analysis
-                               (/api/v1/stream/analyze)
+ Web page (ChatGPT)              Stinger Phase 15 API  ➜  Security Analysis
+                                     (/v1/check)
 ```
 
 ## Documentation
