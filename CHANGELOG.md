@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [0.1.0-a3] - 2025-07-21
-### Fixed
+### Added
+- **Bot Identification** - Added botId "ChatGPT" to API context for improved management console visibility
+
+### Fixed  
 - **Chrome Storage Access** - Fixed undefined error when saving conversations (BUG-001)
 - **Anonymous User Orphaned Responses** - Fixed orphaned audit logs with no user prompts (BUG-002)
 - **Duplicate API Calls** - Fixed duplicate response interceptors creating orphaned conversations (BUG-003)
+- **Response Block UI** - Restored clean inline response blocking display with professional formatting
+- **Console Noise** - Removed verbose warning logs for blocked responses
 
 ## [0.1.0-a2] - 2025-07-17
 
