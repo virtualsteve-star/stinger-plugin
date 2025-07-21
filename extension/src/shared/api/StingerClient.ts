@@ -133,7 +133,7 @@ export class StingerClient {
    */
   async health(): Promise<ApiResult<HealthResponse>> {
     try {
-      const response = await this.request<HealthResponse>('/health', {
+      const response = await this.request<HealthResponse>('/v1/health', {
         maxRetries: 0, // Don't retry health checks
       });
       return response;

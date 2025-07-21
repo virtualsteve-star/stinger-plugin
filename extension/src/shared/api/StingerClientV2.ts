@@ -153,7 +153,7 @@ export class StingerClientV2 {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/health`, {
+      const response = await fetch(`${this.baseUrl}/v1/health`, {
         signal: AbortSignal.timeout(2000),
       });
 
