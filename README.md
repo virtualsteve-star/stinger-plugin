@@ -93,8 +93,8 @@ npm run build
 
 ## Requirements
 
-- Chrome 118+ or Chromium-based browser (SSE streaming requires Chrome 90+)
-- Stinger API v0.1.0-a3a3+ with SSE endpoint support
+- Chrome 118+ or Chromium-based browser
+- Stinger API v0.1.0-a3+ with `/v1/check` endpoint
 - API running on `http://localhost:8888` (or configured endpoint)
 - Node.js 20+ and npm (for development only)
 
