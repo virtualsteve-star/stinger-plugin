@@ -7,7 +7,7 @@
 
 A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms. Now featuring **instant streaming security feedback** with <100ms response times!
 
-## 🚀 Alpha Release v0.1.0-a3 - Phase 15 API Integration
+## 🚀 Alpha Release v0.1.0-a3 - Enhanced API Integration
 
 **⚡ NEW: Enhanced conversation tracking and code generation blocking!** This release features persistent conversation tracking, improved API integration, and working code generation detection with proper audit trails.
 
@@ -20,7 +20,7 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 - 🆕 **Persistent Conversation Tracking** - Single conversation ID maintained throughout session
 - 🆕 **User Context Preservation** - User ID from popup tracked across all API calls
 - 🆕 **Code Generation Blocking** - Working detection and blocking of dangerous code patterns
-- 🆕 **Phase 15 API Integration** - Updated to use `/v1/check` endpoint with proper format
+- 🆕 **Enhanced API Integration** - Updated to use `/v1/check` endpoint with proper format
 - ✅ **Prompt Interception** - Captures prompts before submission on ChatGPT (Enter key & Submit button)
 - ✅ **Real-time Security Checks** - Validates content against Stinger API guardrails
 - ✅ **Response Monitoring** - Checks AI responses for policy violations
@@ -51,13 +51,13 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 │   Content Script   │──────────▶│  Background Service Worker    │
 │ (UI interception)  │  message  │  (config & storage)           │
 │        +           │            └───────────────────────────────┘
-│  SSE Streaming     │                          
-│    Connection      │◀──────────────SSE────────────────────────────┐
+│  Stinger API      │                          
+│    Integration     │◀──────────────HTTP───────────────────────────┐
 └─────────┬──────────┘                                              │
           │DOM mut.                                                 │
           ▼                                                         ▼
- Web page (ChatGPT)              Stinger SSE API  ➜  Real-time Analysis
-                               (/api/v1/stream/analyze)
+ Web page (ChatGPT)              Stinger API  ➜  Security Analysis
+                                     (/v1/check)
 ```
 
 ## Documentation

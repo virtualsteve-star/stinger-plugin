@@ -78,7 +78,13 @@ messageBus.on<CheckPromptMessage>('CHECK_PROMPT', async (message, sender) => {
 
     // Use Phase 15 API
     const conversationId = `chrome_ext_${Date.now()}`;
-    const result = await stingerClientV2.checkInput(message.payload.text, conversationId);
+    const apiContext = {
+      conversation_id: conversationId,
+      userId: context.userId,
+      botId: context.botId,
+      sessionId: context.sessionId,
+    };
+    const result = await stingerClientV2.checkInput(message.payload.text, apiContext);
 
     // Note: Audit logging is handled by the Stinger backend
     // We do NOT store audit events locally
@@ -126,7 +132,13 @@ messageBus.on<CheckResponseMessage>('CHECK_RESPONSE', async (message, sender) =>
 
     // Use Phase 15 API
     const conversationId = `chrome_ext_${Date.now()}`;
-    const result = await stingerClientV2.checkOutput(message.payload.text, conversationId);
+    const apiContext = {
+      conversation_id: conversationId,
+      userId: context.userId,
+      botId: context.botId,
+      sessionId: context.sessionId,
+    };
+    const result = await stingerClientV2.checkOutput(message.payload.text, apiContext);
 
     // Note: Audit logging is handled by the Stinger backend
     // We do NOT store audit events locally

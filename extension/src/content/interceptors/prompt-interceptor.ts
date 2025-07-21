@@ -152,7 +152,7 @@ export class PromptInterceptor {
     const oldInput = this.promptInput;
     this.promptInput = getPromptInput();
     this.submitButton = getSubmitButton();
-    
+
     // Removed debug log for production
 
     if (!this.promptInput) {
@@ -376,7 +376,7 @@ export class PromptInterceptor {
       // Record prompt in conversation manager
       await conversationManager.recordPrompt(promptText);
       const context = await conversationManager.getApiContext();
-      
+
       // Check input with API
       const result = await stingerClientV2.checkInput(promptText, context);
 

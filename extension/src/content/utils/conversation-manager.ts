@@ -40,10 +40,10 @@ export class ConversationManager {
       // Using existing conversation from memory
       return this.currentConversation;
     }
-    
+
     // Try to get conversation from persistent storage
     const storedConversation = await conversationStore.getCurrentConversation();
-    
+
     if (storedConversation) {
       // Restoring conversation from storage
       // Restore conversation from storage
@@ -53,7 +53,7 @@ export class ConversationManager {
         botName: storedConversation.botName,
         lastPrompt: storedConversation.lastPrompt,
         lastPromptTime: storedConversation.lastPromptTime,
-        responseCount: 0
+        responseCount: 0,
       };
       return this.currentConversation;
     }
@@ -65,19 +65,19 @@ export class ConversationManager {
     // Create new conversation
     const newConversationId = `chrome_ext_${Date.now()}`;
     // Removed debug log for production
-    
+
     this.currentConversation = {
       conversationId: newConversationId,
       userId,
       botName: 'ChatGPT',
-      responseCount: 0
+      responseCount: 0,
     };
 
     // Save to persistent storage
     await conversationStore.saveConversation({
       conversationId: this.currentConversation.conversationId,
       userId: this.currentConversation.userId,
-      botName: this.currentConversation.botName
+      botName: this.currentConversation.botName,
     });
 
     return this.currentConversation;
@@ -88,19 +88,19 @@ export class ConversationManager {
    */
   async recordPrompt(prompt: string): Promise<ConversationContext> {
     const conversation = await this.getCurrentConversation();
-    
+
     conversation.lastPrompt = prompt;
     conversation.lastPromptTime = Date.now();
-    
+
     logger.debug('Recording prompt in conversation', {
       conversationId: conversation.conversationId,
       userId: conversation.userId,
-      promptLength: prompt.length
+      promptLength: prompt.length,
     });
-    
+
     // Update persistent storage
     await conversationStore.updateWithPrompt(prompt);
-    
+
     return conversation;
   }
 
@@ -109,15 +109,15 @@ export class ConversationManager {
    */
   async recordResponse(): Promise<ConversationContext> {
     const conversation = await this.getCurrentConversation();
-    
+
     conversation.responseCount++;
-    
+
     logger.debug('Recording response in conversation', {
       conversationId: conversation.conversationId,
       userId: conversation.userId,
-      responseCount: conversation.responseCount
+      responseCount: conversation.responseCount,
     });
-    
+
     return conversation;
   }
 
@@ -136,7 +136,7 @@ export class ConversationManager {
     };
   }> {
     const conversation = await this.getCurrentConversation();
-    
+
     const context = {
       conversation_id: conversation.conversationId,
       userId: conversation.userId,
@@ -145,16 +145,16 @@ export class ConversationManager {
       metadata: {
         bot_name: conversation.botName,
         conversation_type: 'human_bot',
-        last_prompt: conversation.lastPrompt
-      }
+        last_prompt: conversation.lastPrompt,
+      },
     };
-    
+
     logger.debug('Generated API context', {
       conversationId: context.conversation_id,
       userId: context.userId,
-      hasPrompt: !!conversation.lastPrompt
+      hasPrompt: !!conversation.lastPrompt,
     });
-    
+
     return context;
   }
 
@@ -178,7 +178,7 @@ export class ConversationManager {
     // Start new conversation after 30 minutes of inactivity
     const thirtyMinutes = 30 * 60 * 1000;
     const timeSinceLastPrompt = Date.now() - this.currentConversation.lastPromptTime;
-    
+
     return timeSinceLastPrompt > thirtyMinutes;
   }
 
@@ -187,7 +187,9 @@ export class ConversationManager {
    * This prevents response checking from creating orphaned anonymous conversations
    */
   hasActiveConversation(): boolean {
-    return this.currentConversation !== null && this.currentConversation.lastPromptTime !== undefined;
+    return (
+      this.currentConversation !== null && this.currentConversation.lastPromptTime !== undefined
+    );
   }
 }
 

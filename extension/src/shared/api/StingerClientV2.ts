@@ -35,7 +35,10 @@ export class StingerClientV2 {
   private baseUrl: string;
   private timeout: number;
 
-  constructor(baseUrl: string = DEFAULT_CONFIG.apiUrl, timeout: number = DEFAULT_CONFIG.apiTimeout) {
+  constructor(
+    baseUrl: string = DEFAULT_CONFIG.apiUrl,
+    timeout: number = DEFAULT_CONFIG.apiTimeout,
+  ) {
     this.baseUrl = baseUrl;
     this.timeout = timeout;
   }
@@ -102,12 +105,15 @@ export class StingerClientV2 {
   /**
    * Check user input (prompt) with full protection
    */
-  async checkInput(text: string, context: {
-    conversation_id: string;
-    userId: string;
-    botId?: string;
-    sessionId?: string;
-  }): Promise<CheckResponse> {
+  async checkInput(
+    text: string,
+    context: {
+      conversation_id: string;
+      userId: string;
+      botId?: string;
+      sessionId?: string;
+    },
+  ): Promise<CheckResponse> {
     const result = await this.check({
       text,
       kind: 'prompt',
@@ -122,12 +128,15 @@ export class StingerClientV2 {
   /**
    * Check LLM output with streaming_final mode
    */
-  async checkOutput(text: string, context: {
-    conversation_id: string;
-    userId: string;
-    botId?: string;
-    sessionId?: string;
-  }): Promise<CheckResponse> {
+  async checkOutput(
+    text: string,
+    context: {
+      conversation_id: string;
+      userId: string;
+      botId?: string;
+      sessionId?: string;
+    },
+  ): Promise<CheckResponse> {
     const result = await this.check({
       text,
       kind: 'response',

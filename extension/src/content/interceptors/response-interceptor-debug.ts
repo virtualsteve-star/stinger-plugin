@@ -65,19 +65,19 @@ export class ResponseInterceptorDebug {
     console.log('[Stinger Debug] Found chat container:', {
       tag: chatContainer.tagName,
       class: chatContainer.className,
-      id: chatContainer.id
+      id: chatContainer.id,
     });
 
     this.mutationObserver = new MutationObserver((mutations) => {
       console.log(`[Stinger Debug] Mutation detected, ${mutations.length} mutations`);
-      
+
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node instanceof Element) {
             console.log('[Stinger Debug] New element added:', {
               tag: node.tagName,
               class: node.className,
-              textPreview: node.textContent?.substring(0, 50) + '...'
+              textPreview: node.textContent?.substring(0, 50) + '...',
             });
             this.checkForAssistantMessage(node);
           }
@@ -126,17 +126,20 @@ export class ResponseInterceptorDebug {
       hasAssistantRole: !!element.querySelector('[data-message-author-role="assistant"]'),
       hasChatGPTText: element.textContent?.includes('ChatGPT') || false,
       hasPrevChatGPT: element.previousElementSibling?.textContent?.includes('ChatGPT') || false,
-      isGroupWithAssistant: element.classList.contains('group') && !!element.querySelector('[data-message-author-role="assistant"]'),
+      isGroupWithAssistant:
+        element.classList.contains('group') &&
+        !!element.querySelector('[data-message-author-role="assistant"]'),
       hasAssistantParent: !!element.closest('[data-message-author-role="assistant"]'),
       hasChatGPTAvatar: !!element.querySelector('img[alt*="ChatGPT"]'),
-      isGroupWithoutUser: element.classList.contains('group') && 
-                         element.classList.contains('w-full') && 
-                         !element.querySelector('[data-message-author-role="user"]')
+      isGroupWithoutUser:
+        element.classList.contains('group') &&
+        element.classList.contains('w-full') &&
+        !element.querySelector('[data-message-author-role="user"]'),
     };
 
     console.log('[Stinger Debug] Assistant message checks:', checks);
 
-    const isAssistantMessage = Object.values(checks).some(v => v);
+    const isAssistantMessage = Object.values(checks).some((v) => v);
 
     if (!isAssistantMessage) {
       // Also check if this element contains assistant message content
@@ -160,7 +163,7 @@ export class ResponseInterceptorDebug {
    */
   private waitForStreamingCompletion(messageElement: Element): void {
     console.log('[Stinger Debug] Waiting for streaming to complete...');
-    
+
     let lastContent = '';
     let stableCount = 0;
     const requiredStableChecks = 3; // 300ms of stable content
@@ -204,12 +207,18 @@ export class ResponseInterceptorDebug {
       console.log('[Stinger Debug] Checking response with Stinger API:', {
         contentLength: content.length,
         hasCode: messageElement.querySelector('code') !== null,
-        messageNumber: this.messageCount
+        messageNumber: this.messageCount,
       });
 
       // Check output with streaming_final mode
       const conversationId = `chrome_ext_${Date.now()}`;
-      const result = await stingerClientV2.checkOutput(content, conversationId);
+      const apiContext = {
+        conversation_id: conversationId,
+        userId: 'debug-user',
+        botId: 'ChatGPT',
+        sessionId: conversationId,
+      };
+      const result = await stingerClientV2.checkOutput(content, apiContext);
 
       console.log('[Stinger Debug] API Response:', result);
 
@@ -233,7 +242,7 @@ export class ResponseInterceptorDebug {
    */
   private replaceBlockedContent(messageElement: Element, reasons: string[]): void {
     console.log('[Stinger Debug] Replacing blocked content');
-    
+
     // Store original content as data attribute
     messageElement.setAttribute('data-original-content', messageElement.textContent || '');
 
@@ -258,7 +267,7 @@ export class ResponseInterceptorDebug {
    */
   private addWarningIndicator(messageElement: Element, warnings: string[]): void {
     console.log('[Stinger Debug] Adding warning indicator');
-    
+
     // Add warning class
     messageElement.classList.add('stinger-warning-response');
 
