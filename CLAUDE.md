@@ -74,6 +74,13 @@ extension/
 - **User Privacy**: No data collection beyond security analysis
 - **Audit Logging**: Handled server-side, not locally
 
+### **Bug Tracking Guidelines**
+- **Always File GitHub Issues**: When encountering bugs, immediately file them as GitHub issues using `gh issue create`
+- **Never Create Fake Bug IDs**: Do not use internal numbering like "BUG-001" - use real GitHub issue numbers
+- **Close Issues Properly**: Mark issues as fixed with `gh issue close <number> --comment "Fixed in PR #X"`
+- **Reference in Documentation**: Use GitHub issue numbers (#18, #19, etc.) in CHANGELOG.md and commit messages
+- **Include in Commits**: Reference issue numbers in commit messages for traceability
+
 ### **Performance Requirements**
 - **Streaming Target**: <100ms first feedback (vs 3-5s batch)
 - **Memory Management**: Bounded cache with LRU eviction

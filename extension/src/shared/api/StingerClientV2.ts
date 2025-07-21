@@ -16,6 +16,7 @@ export interface Phase15Request {
   context?: {
     conversation_id?: string;
     userId?: string;
+    botId?: string;
     sessionId?: string;
   };
 }
@@ -101,19 +102,18 @@ export class StingerClientV2 {
   /**
    * Check user input (prompt) with full protection
    */
-  async checkInput(text: string, conversationId?: string, userId?: string): Promise<CheckResponse> {
+  async checkInput(text: string, context: {
+    conversation_id: string;
+    userId: string;
+    botId?: string;
+    sessionId?: string;
+  }): Promise<CheckResponse> {
     const result = await this.check({
       text,
       kind: 'prompt',
       mode: 'default', // Full protection for user input
       preset: 'demo_showcase',
-      context: conversationId
-        ? {
-            conversation_id: conversationId,
-            userId: userId,
-            sessionId: conversationId, // Use same as conversation ID for now
-          }
-        : undefined,
+      context: context,
     });
 
     return this.convertToCheckResponse(result);
@@ -122,19 +122,18 @@ export class StingerClientV2 {
   /**
    * Check LLM output with streaming_final mode
    */
-  async checkOutput(text: string, conversationId?: string, userId?: string): Promise<CheckResponse> {
+  async checkOutput(text: string, context: {
+    conversation_id: string;
+    userId: string;
+    botId?: string;
+    sessionId?: string;
+  }): Promise<CheckResponse> {
     const result = await this.check({
       text,
       kind: 'response',
       mode: 'streaming_final', // Full check on complete response
       preset: 'demo_showcase',
-      context: conversationId
-        ? {
-            conversation_id: conversationId,
-            userId: userId,
-            sessionId: conversationId, // Use same as conversation ID for now
-          }
-        : undefined,
+      context: context,
     });
 
     return this.convertToCheckResponse(result);

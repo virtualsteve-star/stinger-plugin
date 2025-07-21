@@ -152,6 +152,8 @@ export class PromptInterceptor {
     const oldInput = this.promptInput;
     this.promptInput = getPromptInput();
     this.submitButton = getSubmitButton();
+    
+    // Removed debug log for production
 
     if (!this.promptInput) {
       logger.warn('Could not find prompt input');
@@ -375,8 +377,8 @@ export class PromptInterceptor {
       await conversationManager.recordPrompt(promptText);
       const context = await conversationManager.getApiContext();
       
-      // Checking prompt with conversation context
-      const result = await stingerClientV2.checkInput(promptText, context.conversation_id, context.userId);
+      // Check input with API
+      const result = await stingerClientV2.checkInput(promptText, context);
 
       // Handle result
       this.handleAnalysisResult(result.action === 'block', result.warnings, result.reasons);

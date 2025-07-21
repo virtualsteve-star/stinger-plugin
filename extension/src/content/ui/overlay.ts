@@ -166,6 +166,56 @@ export class StingerOverlay {
   }
 
   /**
+   * Show a response block message
+   */
+  showBlockedResponse(reasons: string[]): void {
+    this.createOverlay();
+
+    const content = `
+      <div style="
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        padding: 24px;
+      ">
+        <div style="display: flex; align-items: center; margin-bottom: 16px;">
+          <span style="font-size: 24px; margin-right: 12px;">🛑</span>
+          <h2 style="margin: 0; color: #991B1B; font-size: 20px;">Response Blocked by Stinger</h2>
+        </div>
+        
+        <div style="color: #1F2937; margin-bottom: 20px;">
+          <p style="margin: 0 0 12px 0;">This response contains content that violates security policies:</p>
+          <ul style="margin: 0; padding-left: 20px;">
+            ${reasons.map((r) => `<li style="margin: 4px 0;">${this.escapeHtml(r)}</li>`).join('')}
+          </ul>
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end;">
+          <button id="stinger-ok" style="
+            background: #DC2626;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 8px 24px;
+          ">OK</button>
+        </div>
+      </div>
+    `;
+
+    if (this.overlayContainer) {
+      this.overlayContainer.innerHTML = content;
+
+      const okBtn = this.overlayContainer.querySelector('#stinger-ok');
+      okBtn?.addEventListener('click', () => {
+        this.hideOverlay();
+      });
+    }
+  }
+
+  /**
    * Create the overlay container
    */
   private createOverlay(): void {

@@ -198,6 +198,13 @@ export class ResponseInterceptor {
     }
     this.processingContent.add(contentHash);
 
+    // Only check responses if there's an active conversation with prompts
+    // This prevents creating orphaned anonymous conversations
+    if (!conversationManager.hasActiveConversation()) {
+      logger.info('Skipping response check - no active conversation with prompts');
+      return;
+    }
+
     try {
       // Check output with streaming_final mode
       // Use conversation ID from conversation manager
@@ -205,15 +212,14 @@ export class ResponseInterceptor {
       const context = await conversationManager.getApiContext();
       
       // Checking response with conversation context
-      const result = await stingerClientV2.checkOutput(content, context.conversation_id, context.userId);
+      const result = await stingerClientV2.checkOutput(content, context);
 
       if (result.action === 'block') {
-        logger.warn('Response blocked:', result.reasons);
+        // Block the response with visual indicator
         this.replaceBlockedContent(messageElement, result.reasons);
       } else if (result.warnings.length > 0) {
         // Only add warning if not already present
         if (!messageElement.querySelector('.stinger-warning-icon')) {
-          logger.warn('Response has warnings:', result.warnings);
           this.addWarningIndicator(messageElement, result.warnings);
         }
       }
@@ -242,20 +248,56 @@ export class ResponseInterceptor {
     // Store original content as data attribute
     messageElement.setAttribute('data-original-content', messageElement.textContent || '');
 
-    // Replace with safe message
-    messageElement.textContent = 'I cannot provide that information due to safety policies.';
+    // Replace with formatted block message
+    const blockHtml = `
+      <div style="
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 8px 0;
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          margin-bottom: 12px;
+          color: #991B1B;
+          font-weight: 600;
+        ">
+          <span style="margin-right: 8px;">🛑</span>
+          Response Blocked by Stinger
+        </div>
+        
+        <div style="
+          color: #7F1D1D;
+          margin-bottom: 12px;
+        ">
+          This response contains content that violates security policies:
+        </div>
+        
+        <ul style="
+          margin: 0;
+          padding-left: 20px;
+          color: #7F1D1D;
+        ">
+          ${reasons.map(reason => `<li style="margin: 4px 0;">${this.escapeHtml(reason)}</li>`).join('')}
+        </ul>
+      </div>
+    `;
 
-    // Add visual indicator
+    messageElement.innerHTML = blockHtml;
+
+    // Add CSS class for additional styling
     messageElement.classList.add('stinger-blocked-response');
+  }
 
-    // Add tooltip with reasons
-    const tooltip = document.createElement('div');
-    tooltip.className = 'stinger-block-tooltip';
-    tooltip.textContent = `Blocked: ${reasons.join(', ')}`;
-    messageElement.appendChild(tooltip);
-
-    // Show overlay notification
-    this.overlay.showBlockedNotification(reasons);
+  /**
+   * Escape HTML for safe insertion
+   */
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**

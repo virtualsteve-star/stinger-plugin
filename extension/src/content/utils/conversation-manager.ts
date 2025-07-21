@@ -64,7 +64,7 @@ export class ConversationManager {
 
     // Create new conversation
     const newConversationId = `chrome_ext_${Date.now()}`;
-    // Creating new conversation
+    // Removed debug log for production
     
     this.currentConversation = {
       conversationId: newConversationId,
@@ -92,6 +92,12 @@ export class ConversationManager {
     conversation.lastPrompt = prompt;
     conversation.lastPromptTime = Date.now();
     
+    logger.debug('Recording prompt in conversation', {
+      conversationId: conversation.conversationId,
+      userId: conversation.userId,
+      promptLength: prompt.length
+    });
+    
     // Update persistent storage
     await conversationStore.updateWithPrompt(prompt);
     
@@ -106,6 +112,12 @@ export class ConversationManager {
     
     conversation.responseCount++;
     
+    logger.debug('Recording response in conversation', {
+      conversationId: conversation.conversationId,
+      userId: conversation.userId,
+      responseCount: conversation.responseCount
+    });
+    
     return conversation;
   }
 
@@ -115,6 +127,7 @@ export class ConversationManager {
   async getApiContext(): Promise<{
     conversation_id: string;
     userId: string;
+    botId: string;
     sessionId: string;
     metadata?: {
       bot_name: string;
@@ -124,9 +137,10 @@ export class ConversationManager {
   }> {
     const conversation = await this.getCurrentConversation();
     
-    return {
+    const context = {
       conversation_id: conversation.conversationId,
       userId: conversation.userId,
+      botId: 'ChatGPT', // For Core Engineering management console
       sessionId: conversation.conversationId, // Use same as conversation ID for now
       metadata: {
         bot_name: conversation.botName,
@@ -134,6 +148,14 @@ export class ConversationManager {
         last_prompt: conversation.lastPrompt
       }
     };
+    
+    logger.debug('Generated API context', {
+      conversationId: context.conversation_id,
+      userId: context.userId,
+      hasPrompt: !!conversation.lastPrompt
+    });
+    
+    return context;
   }
 
   /**
@@ -158,6 +180,14 @@ export class ConversationManager {
     const timeSinceLastPrompt = Date.now() - this.currentConversation.lastPromptTime;
     
     return timeSinceLastPrompt > thirtyMinutes;
+  }
+
+  /**
+   * Check if there's an active conversation with at least one prompt
+   * This prevents response checking from creating orphaned anonymous conversations
+   */
+  hasActiveConversation(): boolean {
+    return this.currentConversation !== null && this.currentConversation.lastPromptTime !== undefined;
   }
 }
 

@@ -3,10 +3,10 @@
  */
 
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
-import { loggers } from '../../shared/logging/Logger';
+// import { loggers } from '../../shared/logging/Logger';
 import { StingerOverlay } from '../ui/overlay';
 
-const logger = loggers.content;
+// const logger = loggers.content;
 
 export class ResponseInterceptorDebug {
   private overlay: StingerOverlay;
