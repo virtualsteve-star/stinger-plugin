@@ -35,7 +35,7 @@ async function initializeStingerGuard() {
       },
     };
 
-    const response = await messageBus.send<ContentLoadedMessage>(message);
+    await messageBus.send<ContentLoadedMessage>(message);
     // Removed debug log for production
 
     // Set up prompt interception

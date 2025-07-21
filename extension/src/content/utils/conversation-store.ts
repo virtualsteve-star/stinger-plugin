@@ -22,7 +22,7 @@ export class ConversationStore {
    */
   async getCurrentConversation(): Promise<StoredConversation | null> {
     try {
-      const result = await ChromeWrapper.storage.get(STORAGE_KEY);
+      const result = await ChromeWrapper.storage.get<Record<string, StoredConversation>>(STORAGE_KEY);
       const conversation = result[STORAGE_KEY] as StoredConversation | undefined;
       
       if (!conversation) {

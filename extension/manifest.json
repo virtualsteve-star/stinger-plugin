@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Stinger Guard",
-  "version": "0.1.0.2",
+  "version": "0.1.0.3",
   "description": "Security guardrails for LLM interactions",
   "permissions": [
     "storage",
@@ -23,7 +23,9 @@
         "https://chat.openai.com/*",
         "https://chatgpt.com/*"
       ],
-      "js": ["src/content/index.ts"],
+      "js": [
+        "src/content/index.ts"
+      ],
       "run_at": "document_idle"
     }
   ],

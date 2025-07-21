@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-a3] - 2025-07-21
 ### Fixed
 - **Chrome Storage Access** - Fixed undefined error when saving conversations (BUG-001)
 - **Anonymous User Orphaned Responses** - Fixed orphaned audit logs with no user prompts (BUG-002)
@@ -113,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Estimated 21-29 days of additional development across 3 sprints
 - Focus areas: Authentication, Testing Framework, Performance, Observability
 
-[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a2...HEAD
+[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a3...HEAD
+[0.1.0-a3]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a2...v0.1.0-a3
 [0.1.0-a2]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a1...v0.1.0-a2
 [0.1.0-a1]: https://github.com/virtualsteve-star/stinger-plugin/releases/tag/v0.1.0-a1
