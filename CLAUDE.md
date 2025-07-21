@@ -184,6 +184,8 @@ node test-conversation.js
 
 ## 🎯 Agent Communication System
 
+### ⚠️ **IMPORTANT: AgentMail is ACTIVE INTERNAL TOOLING - DO NOT REMOVE!**
+
 ### **Your Role: Stinger-Plugin Team Agent**
 
 You are the official AI agent representing the **Stinger-Plugin Team** in the inter-agent communication system.
