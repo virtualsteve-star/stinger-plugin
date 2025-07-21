@@ -65,9 +65,10 @@ function setupPromptInterception() {
 function setupResponseMonitoring() {
   // Removed debug log for production
 
-  responseMonitor = new ResponseMonitor(messageBus);
+  // Only use Phase 15 response interceptor (not legacy ResponseMonitor)
+  // responseMonitor = new ResponseMonitor(messageBus);
 
-  // Also set up Phase 15 response interceptor
+  // Set up Phase 15 response interceptor
   responseInterceptor = new ResponseInterceptor();
   responseInterceptor.start();
 }
@@ -84,17 +85,12 @@ function setupDOMObservation() {
 
     onNewAssistantMessage: (text) => {
       // Removed debug log for production
-      if (responseMonitor) {
-        responseMonitor.resetForNewMessage();
-        responseMonitor.checkResponse(text);
-      }
+      // Legacy response monitoring disabled - using ResponseInterceptor instead
     },
 
     onAssistantMessageUpdate: (text) => {
       // Removed debug log for production
-      if (responseMonitor) {
-        responseMonitor.checkResponse(text);
-      }
+      // Legacy response monitoring disabled - using ResponseInterceptor instead
     },
 
     onGenerationStart: () => {

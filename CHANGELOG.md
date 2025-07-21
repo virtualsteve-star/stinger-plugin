@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Chrome Storage Access** - Fixed undefined error when saving conversations (BUG-001)
 - **Anonymous User Orphaned Responses** - Fixed orphaned audit logs with no user prompts (BUG-002)
+- **Duplicate API Calls** - Fixed duplicate response interceptors creating orphaned conversations (BUG-003)
 
 ## [0.1.0-a2] - 2025-07-17
 
