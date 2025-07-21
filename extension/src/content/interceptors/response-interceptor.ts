@@ -212,7 +212,7 @@ export class ResponseInterceptor {
       const context = await conversationManager.getApiContext();
       
       // Checking response with conversation context
-      const result = await stingerClientV2.checkOutput(content, context.conversation_id, context.userId);
+      const result = await stingerClientV2.checkOutput(content, context);
 
       if (result.action === 'block') {
         logger.warn('Response blocked:', result.reasons);

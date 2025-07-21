@@ -127,6 +127,7 @@ export class ConversationManager {
   async getApiContext(): Promise<{
     conversation_id: string;
     userId: string;
+    botId: string;
     sessionId: string;
     metadata?: {
       bot_name: string;
@@ -139,6 +140,7 @@ export class ConversationManager {
     const context = {
       conversation_id: conversation.conversationId,
       userId: conversation.userId,
+      botId: 'ChatGPT', // For Core Engineering management console
       sessionId: conversation.conversationId, // Use same as conversation ID for now
       metadata: {
         bot_name: conversation.botName,
