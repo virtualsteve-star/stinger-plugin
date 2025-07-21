@@ -6,7 +6,6 @@ import { MessageBus } from '../shared/messaging/MessageBus';
 import { loggers } from '../shared/logging/Logger';
 import { ChatGPTDOMObserver } from './observers/dom-observer';
 import { PromptInterceptor } from './interceptors/prompt-interceptor';
-import { ResponseMonitor } from './interceptors/response-monitor';
 import { ResponseInterceptor } from './interceptors/response-interceptor';
 import type { ContentLoadedMessage } from '../shared/types/messages';
 
@@ -18,7 +17,6 @@ const messageBus = new MessageBus();
 // Components
 let domObserver: ChatGPTDOMObserver | null = null;
 let promptInterceptor: PromptInterceptor | null = null;
-let responseMonitor: ResponseMonitor | null = null;
 let responseInterceptor: ResponseInterceptor | null = null;
 
 // Initialize Stinger Guard
@@ -83,12 +81,12 @@ function setupDOMObservation() {
       // The prompt interceptor handles checking before submission
     },
 
-    onNewAssistantMessage: (text) => {
+    onNewAssistantMessage: (_text) => {
       // Removed debug log for production
       // Legacy response monitoring disabled - using ResponseInterceptor instead
     },
 
-    onAssistantMessageUpdate: (text) => {
+    onAssistantMessageUpdate: (_text) => {
       // Removed debug log for production
       // Legacy response monitoring disabled - using ResponseInterceptor instead
     },

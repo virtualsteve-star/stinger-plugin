@@ -4,13 +4,11 @@
 
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { loggers } from '../../shared/logging/Logger';
-import { StingerOverlay } from '../ui/overlay';
 import { conversationManager } from '../utils/conversation-manager';
 
 const logger = loggers.content;
 
 export class ResponseInterceptor {
-  private overlay: StingerOverlay;
   private isMonitoring = false;
   private mutationObserver: MutationObserver | null = null;
   private processedMessages = new WeakSet<Element>();
@@ -18,7 +16,7 @@ export class ResponseInterceptor {
   private blockedMessages = new WeakSet<Element>(); // Track blocked messages
 
   constructor() {
-    this.overlay = new StingerOverlay();
+    // Empty constructor
   }
 
   /**
@@ -110,7 +108,7 @@ export class ResponseInterceptor {
 
     // Find the actual message element (not containers)
     let messageElement: Element | null = null;
-    
+
     // Direct assistant message element
     if (element.getAttribute('data-message-author-role') === 'assistant') {
       messageElement = element;
@@ -146,7 +144,10 @@ export class ResponseInterceptor {
 
     const checkInterval = setInterval(async () => {
       // Stop monitoring if message was blocked
-      if (this.blockedMessages.has(messageElement) || messageElement.classList.contains('stinger-blocked-response')) {
+      if (
+        this.blockedMessages.has(messageElement) ||
+        messageElement.classList.contains('stinger-blocked-response')
+      ) {
         clearInterval(checkInterval);
         return;
       }
@@ -210,7 +211,7 @@ export class ResponseInterceptor {
       // Use conversation ID from conversation manager
       await conversationManager.recordResponse();
       const context = await conversationManager.getApiContext();
-      
+
       // Checking response with conversation context
       const result = await stingerClientV2.checkOutput(content, context);
 
@@ -244,7 +245,7 @@ export class ResponseInterceptor {
   private replaceBlockedContent(messageElement: Element, reasons: string[]): void {
     // Mark as blocked to prevent re-processing
     this.blockedMessages.add(messageElement);
-    
+
     // Store original content as data attribute
     messageElement.setAttribute('data-original-content', messageElement.textContent || '');
 
@@ -280,7 +281,7 @@ export class ResponseInterceptor {
           padding-left: 20px;
           color: #7F1D1D;
         ">
-          ${reasons.map(reason => `<li style="margin: 4px 0;">${this.escapeHtml(reason)}</li>`).join('')}
+          ${reasons.map((reason) => `<li style="margin: 4px 0;">${this.escapeHtml(reason)}</li>`).join('')}
         </ul>
       </div>
     `;

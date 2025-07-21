@@ -22,9 +22,10 @@ export class ConversationStore {
    */
   async getCurrentConversation(): Promise<StoredConversation | null> {
     try {
-      const result = await ChromeWrapper.storage.get<Record<string, StoredConversation>>(STORAGE_KEY);
+      const result =
+        await ChromeWrapper.storage.get<Record<string, StoredConversation>>(STORAGE_KEY);
       const conversation = result[STORAGE_KEY] as StoredConversation | undefined;
-      
+
       if (!conversation) {
         return null;
       }
@@ -50,7 +51,7 @@ export class ConversationStore {
   async saveConversation(conversation: StoredConversation): Promise<void> {
     try {
       await ChromeWrapper.storage.set({
-        [STORAGE_KEY]: conversation
+        [STORAGE_KEY]: conversation,
       });
     } catch (error) {
       console.error('Failed to save conversation:', error);
