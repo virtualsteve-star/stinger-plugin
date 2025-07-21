@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-a4] - 2025-07-21
+
+### Added
+- Version bump to 0.1.0-a4
+- **API Version Requirement** - Now requires Stinger Core API v0.2.0a2 or newer
+
+### Changed
+- **API Endpoint Migration** - Updated all API endpoints to use `/v1/` prefix:
+  - Health check: `/health` → `/v1/health`
+  - All API calls now use versioned endpoints for future compatibility
+
+
 ## [0.1.0-a3] - 2025-07-21
 ### Added
 - **Bot Identification** - Added botId "ChatGPT" to API context for improved management console visibility
@@ -120,7 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Estimated 21-29 days of additional development across 3 sprints
 - Focus areas: Authentication, Testing Framework, Performance, Observability
 
-[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a3...HEAD
+[Unreleased]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a4...HEAD
+[0.1.0-a4]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a3...v0.1.0-a4
 [0.1.0-a3]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a2...v0.1.0-a3
 [0.1.0-a2]: https://github.com/virtualsteve-star/stinger-plugin/compare/v0.1.0-a1...v0.1.0-a2
 [0.1.0-a1]: https://github.com/virtualsteve-star/stinger-plugin/releases/tag/v0.1.0-a1
