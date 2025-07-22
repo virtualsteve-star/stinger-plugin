@@ -1,7 +1,7 @@
 # Stinger Guard Chrome Extension
 
 [![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.0--a3-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0--a4-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
 [![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.2.0a2+-brightgreen)](https://github.com/virtualsteve-star/stinger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
