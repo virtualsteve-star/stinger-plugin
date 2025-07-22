@@ -74,6 +74,19 @@ extension/
 - **User Privacy**: No data collection beyond security analysis
 - **Audit Logging**: Handled server-side, not locally
 
+### **Git Workflow Guidelines**
+- **NEVER Push Direct to Main**: Always push to `dev` branch and create PRs to `main`
+- **Branch Strategy**: 
+  - Work on `dev` branch for all changes
+  - Create PR from `dev` to `main` for releases
+  - Use `gh pr create` to create pull requests
+  - Only merge to `main` through approved PRs
+- **Commit Pattern**: 
+  1. Make changes on `dev`
+  2. Push to `origin/dev`
+  3. Create PR to `main`
+  4. Never use `git push` when on `main` branch
+
 ### **Bug Tracking Guidelines**
 - **Always File GitHub Issues**: When encountering bugs, immediately file them as GitHub issues using `gh issue create`
 - **Never Create Fake Bug IDs**: Do not use internal numbering like "BUG-001" - use real GitHub issue numbers
@@ -170,6 +183,8 @@ node test-conversation.js
 - **Message Passing**: Use chrome.runtime.sendMessage for service worker communication
 
 ## 🎯 Agent Communication System
+
+### ⚠️ **IMPORTANT: AgentMail is ACTIVE INTERNAL TOOLING - DO NOT REMOVE!**
 
 ### **Your Role: Stinger-Plugin Team Agent**
 

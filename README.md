@@ -1,13 +1,13 @@
 # Stinger Guard Chrome Extension
 
 [![CI](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/virtualsteve-star/stinger-plugin/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.0--a3-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
-[![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.1.0-a3a3-brightgreen)](https://github.com/virtualsteve-star/stinger)
+[![Version](https://img.shields.io/badge/version-0.1.0--a4-blue)](https://github.com/virtualsteve-star/stinger-plugin/releases)
+[![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.2.0a2+-brightgreen)](https://github.com/virtualsteve-star/stinger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms. Now featuring **instant streaming security feedback** with <100ms response times!
 
-## 🚀 Alpha Release v0.1.0-a3 - Enhanced API Integration
+## 🚀 Alpha Release v0.1.0-a4 - Enhanced API Integration
 
 **⚡ NEW: Enhanced conversation tracking and code generation blocking!** This release features persistent conversation tracking, improved API integration, and working code generation detection with proper audit trails.
 
@@ -15,7 +15,7 @@ A Chrome extension that provides real-time security guardrails for Large Languag
 
 Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces security policies for prompts and responses on LLM interfaces like ChatGPT and Microsoft Copilot. It integrates with the [Stinger](https://github.com/virtualsteve-star/stinger) policy engine to prevent sensitive data leakage and enforce enterprise security policies.
 
-### Key Features (v0.1.0-a3)
+### Key Features (v0.1.0-a4)
 
 - 🆕 **Persistent Conversation Tracking** - Single conversation ID maintained throughout session
 - 🆕 **User Context Preservation** - User ID from popup tracked across all API calls
@@ -28,7 +28,7 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 - ✅ **Chrome Storage Persistence** - Conversation state survives page refreshes
 - ✅ **Graceful Fallback** - Fail-open behavior on API timeouts with user feedback
 
-### What's New in v0.1.0-a3
+### What's New in v0.1.0-a4
 
 #### 🔒 Enhanced Security & Tracking
 - **Persistent conversation tracking** - Same ID for entire ChatGPT session
@@ -94,7 +94,7 @@ npm run build
 ## Requirements
 
 - Chrome 118+ or Chromium-based browser
-- Stinger API v0.1.0-a3+ with `/v1/check` endpoint
+- Stinger Core API v0.2.0a2+ (required for `/v1/` endpoint support)
 - API running on `http://localhost:8888` (or configured endpoint)
 - Node.js 20+ and npm (for development only)
 
@@ -206,7 +206,7 @@ This extension is designed with security as the primary focus:
 ## Roadmap
 
 ### ✅ Recently Completed
-- ⚡ **SSE Streaming Integration** - Real-time security feedback (v0.1.0-a3)
+- ⚡ **SSE Streaming Integration** - Real-time security feedback (v0.1.0-a4)
 - 🚀 **20x Performance Improvement** - <100ms first response
 - 🎯 **Progressive UI Feedback** - Transparent security analysis
 

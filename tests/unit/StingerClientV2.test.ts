@@ -165,7 +165,7 @@ describe('StingerClientV2', () => {
 
       expect(isHealthy).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8100/health',
+        'http://localhost:8100/v1/health',
         expect.objectContaining({
           signal: expect.any(AbortSignal),
         }),

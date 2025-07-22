@@ -36,7 +36,7 @@ describe.skip('StingerClient', () => {
       client.health();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.stinger.test/health',
+        'https://api.stinger.test/v1/health',
         expect.any(Object)
       );
     });
@@ -65,7 +65,7 @@ describe.skip('StingerClient', () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8888/health',
+        'http://localhost:8888/v1/health',
         expect.objectContaining({
           headers: expect.objectContaining({
             'Content-Type': 'application/json',

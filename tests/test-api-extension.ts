@@ -93,7 +93,7 @@ class StingerAPIClient {
   }
 
   async health(): Promise<HealthResponse> {
-    const response = await fetch(`${this.baseUrl}/health`);
+    const response = await fetch(`${this.baseUrl}/v1/health`);
     if (!response.ok) {
       throw new Error(`Health check failed: ${response.status}`);
     }
