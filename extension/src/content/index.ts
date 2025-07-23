@@ -55,7 +55,7 @@ async function initializeStingerGuard() {
 function setupPromptInterception() {
   // Removed debug log for production
 
-  promptInterceptor = new PromptInterceptor(messageBus);
+  promptInterceptor = new PromptInterceptor();
   promptInterceptor.start();
 }
 
