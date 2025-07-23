@@ -21,13 +21,11 @@ global.chrome = {
   },
 } as any;
 
-// Mock window with Object.defineProperty to avoid JSDOM navigation errors
-Object.defineProperty(window, 'location', {
-  value: {
-    hostname: 'chatgpt.com',
-  },
-  writable: true,
-});
+// Mock window.location.hostname
+delete (window as any).location;
+(window as any).location = {
+  hostname: 'chatgpt.com',
+};
 
 describe('StingerSSEClient', () => {
   let client: StingerSSEClient;
