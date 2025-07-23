@@ -2,40 +2,28 @@
  * Prompt Interceptor - Captures and checks prompts before submission
  */
 
-import { MessageBus } from '../../shared/messaging/MessageBus';
 import { loggers } from '../../shared/logging/Logger';
 import { getPromptInput, getSubmitButton } from '../selectors/chatgpt';
 import { StingerOverlay } from '../ui/overlay';
-import { ProgressiveSecurityFeedback } from '../ui/ProgressiveSecurityFeedback';
-import { StingerSSEClient } from '../../shared/api/StingerSSEClient';
 import { conversationManager } from '../utils/conversation-manager';
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
-import { UI_CONFIG, SECURITY_CONFIG } from '../../shared/constants';
-import type { CheckPromptMessage, CheckResultMessage } from '../../shared/types/messages';
+import { UI_CONFIG } from '../../shared/constants';
 
 const logger = loggers.content;
 
 export class PromptInterceptor {
-  private messageBus: MessageBus;
   private originalSubmitHandler: ((e: Event) => void) | null = null;
   private isCheckingPrompt = false;
   private submitButton: HTMLButtonElement | null = null;
   private promptInput: HTMLTextAreaElement | HTMLElement | null = null;
   private overlay: StingerOverlay;
-  private progressFeedback: ProgressiveSecurityFeedback;
-  private sseClient: StingerSSEClient;
   private interceptedElements = new WeakSet<Element>();
-  private usePhase15API = true;
   private lastKnownValue = '';
   private intervalId: number | null = null;
   private mutationObserver: MutationObserver | null = null;
-  private streamingEnabled = true;
 
-  constructor(messageBus: MessageBus) {
-    this.messageBus = messageBus;
+  constructor() {
     this.overlay = new StingerOverlay();
-    this.progressFeedback = new ProgressiveSecurityFeedback();
-    this.sseClient = new StingerSSEClient();
   }
 
   /**
@@ -105,16 +93,7 @@ export class PromptInterceptor {
       this.mutationObserver = null;
     }
 
-    // Clean up progress feedback
-    this.progressFeedback.cleanup();
-  }
-
-  /**
-   * Enable or disable streaming mode
-   */
-  setStreamingEnabled(enabled: boolean): void {
-    this.streamingEnabled = enabled;
-    // Removed info log for production
+    // No additional cleanup needed
   }
 
   /**
@@ -347,14 +326,8 @@ export class PromptInterceptor {
     try {
       // Removed info log for production
 
-      // Use Phase 15 API if enabled
-      if (this.usePhase15API) {
-        await this.analyzeWithPhase15(promptText);
-      } else if (this.streamingEnabled && StingerSSEClient.isSupported()) {
-        await this.analyzeWithStreaming(promptText);
-      } else {
-        await this.analyzeWithBatch(promptText);
-      }
+      // Always use Phase 15 API
+      await this.analyzeWithPhase15(promptText);
     } catch (error) {
       logger.error('Error checking prompt:', error);
       // On error, allow submission (fail open)
@@ -390,72 +363,7 @@ export class PromptInterceptor {
   }
 
   /**
-   * Analyze with streaming SSE
-   */
-  private async analyzeWithStreaming(promptText: string): Promise<void> {
-    try {
-      // Removed info log for production
-
-      // Start progress indication
-      this.progressFeedback.startSecurityCheck();
-
-      // Perform streaming analysis
-      const result = await this.sseClient.analyzeWithStreaming(promptText);
-
-      // Process guardrail results progressively
-      for (const guardrailResult of result.guardrailResults) {
-        this.progressFeedback.handleGuardrailResult(guardrailResult);
-      }
-
-      // Complete security check
-      this.progressFeedback.completeSecurityCheck(result.blocked, result.warnings);
-
-      // Handle final result
-      this.handleAnalysisResult(result.blocked, result.warnings, result.reasons);
-    } catch (error) {
-      logger.warn('Streaming analysis failed, falling back to batch:', error);
-      this.progressFeedback.handleStreamError(
-        error instanceof Error ? error.message : 'Unknown error',
-      );
-
-      // Fallback to batch mode
-      await this.analyzeWithBatch(promptText);
-    }
-  }
-
-  /**
-   * Analyze with batch API (fallback)
-   */
-  private async analyzeWithBatch(promptText: string): Promise<void> {
-    // Send prompt to background for checking
-    const message: Omit<CheckPromptMessage, 'id' | 'timestamp'> = {
-      type: 'CHECK_PROMPT',
-      payload: {
-        text: promptText,
-        metadata: {
-          conversationId: `session-${Date.now()}`,
-          messageId: `msg-${Date.now()}`,
-        },
-      },
-    };
-
-    // Wait for check result
-    const resultPromise = this.waitForCheckResult();
-    await this.messageBus.send(message);
-    const result = await resultPromise;
-
-    // Removed info log for production
-
-    // Handle the result
-    const blocked = result.action === 'block';
-    const warnings = result.warnings || [];
-    const reasons = result.reasons || [];
-
-    this.handleAnalysisResult(blocked, warnings, reasons);
-  }
-
-  /**
-   * Handle analysis result (both streaming and batch)
+   * Handle analysis result
    */
   private async handleAnalysisResult(
     blocked: boolean,
@@ -479,29 +387,6 @@ export class PromptInterceptor {
       // Allow submission
       this.submitPrompt();
     }
-  }
-
-  /**
-   * Wait for check result
-   */
-  private waitForCheckResult(): Promise<CheckResultMessage['payload']> {
-    return new Promise((resolve) => {
-      let unsubscribe: (() => void) | null = null;
-
-      const handler = (message: CheckResultMessage) => {
-        resolve(message.payload);
-        unsubscribe?.();
-        return { success: true };
-      };
-
-      unsubscribe = this.messageBus.on('CHECK_RESULT', handler);
-
-      // Timeout after configured time
-      setTimeout(() => {
-        unsubscribe?.();
-        resolve({ action: 'allow', reasons: [], warnings: [], originalMessageId: '' });
-      }, SECURITY_CONFIG.PROMPT_CHECK_TIMEOUT);
-    });
   }
 
   /**

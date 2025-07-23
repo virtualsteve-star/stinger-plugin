@@ -5,7 +5,7 @@
 [![Stinger Compatible](https://img.shields.io/badge/Stinger-v0.2.0a2+-brightgreen)](https://github.com/virtualsteve-star/stinger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms. Now featuring **instant streaming security feedback** with <100ms response times!
+A Chrome extension that provides real-time security guardrails for Large Language Model (LLM) interactions on web-based platforms.
 
 ## 🚀 Alpha Release v0.1.0-a4 - Enhanced API Integration
 
@@ -68,8 +68,6 @@ Stinger Plugin is a Chrome Extension (Manifest V3) that monitors and enforces se
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md)
-- [SSE Streaming Integration Plan](docs/plans/SSE_STREAMING_INTEGRATION_PLAN.md)
-- [Performance Validation Report](docs/SSE_PERFORMANCE_VALIDATION.md)
 
 ## Installation
 
@@ -113,17 +111,11 @@ npm run build
    - Show warnings or blocks for policy violations
    - Monitor AI responses for sensitive content
 
-### Security Feedback Experience
+### Security Feedback
 
-#### Instant Pattern Detection (<100ms)
-- **🟢 Allow**: Content instantly passes pattern checks
-- **🟡 Warning**: Quick detection of potential issues with option to proceed
-- **🔴 Block**: Immediate blocking of known policy violations
-
-#### Progressive Analysis
-- **🛡️ Security scanning...**: Shown after 500ms for complex analysis
-- **Real-time updates**: See each security check as it completes
-- **Transparent process**: No more "black box" waiting
+- **🟢 Allow**: Content passes security checks
+- **🟡 Warning**: Potential issues detected with option to proceed
+- **🔴 Block**: Policy violations prevented
 
 ## Development
 
@@ -206,9 +198,9 @@ This extension is designed with security as the primary focus:
 ## Roadmap
 
 ### ✅ Recently Completed
-- ⚡ **SSE Streaming Integration** - Real-time security feedback (v0.1.0-a4)
-- 🚀 **20x Performance Improvement** - <100ms first response
-- 🎯 **Progressive UI Feedback** - Transparent security analysis
+- 🔌 **Enhanced API Integration** - Improved conversation tracking (v0.1.0-a4)
+- 🐛 **Bug Fixes** - Resolved critical issues with API timeouts
+- 🔧 **Infrastructure Improvements** - Better error handling and logging
 
 ### 🔜 Next Priorities
 See our [Post-Release Roadmap](docs/plans/POST_RELEASE_ROADMAP.md) for planned features:

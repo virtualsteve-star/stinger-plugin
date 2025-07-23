@@ -73,7 +73,7 @@ Out‑of‑scope for v0.1: mobile browsers, non‑Chromium browsers, offline mod
   - Attach `keydown` listener to `<textarea>` / `<input>`; on Enter or click of send button.
   - Hash & store prompt in variable until verdict.
 - Detect **model response**:
-  - `MutationObserver` on message container (`.markdown.prose`, `.result-streaming`) until a node’s `data-finished="true"` attr or line ending appears.
+  - `MutationObserver` on message container (`.markdown.prose`, `.result-container`) until response completion.
 - **Redaction / Block UI**:
   - If `action === "block"`, empty textarea & show toast.
   - If blocking a response, replace message div with red banner; keep original text in `data-raw` attr for forensic copy.
@@ -177,7 +177,7 @@ Out‑of‑scope for v0.1: mobile browsers, non‑Chromium browsers, offline mod
 
 - **Firefox MV3 port** (shared TS code, different manifest keys).
 - **Edge Add‑ons listing** (Edge uses same manifest).
-- **Streaming chunk inspection** for SSE/WebSocket by patching `EventSource`/`WebSocket` prototypes.
+- **Advanced response monitoring** for real-time content analysis.
 - **On‑device ML mini‑models** (WASM) for privacy‑preserving keyword classification when offline.
 - **DeclarativeNetRequest rules** for high‑confidence static blocks to reduce latency.
 
