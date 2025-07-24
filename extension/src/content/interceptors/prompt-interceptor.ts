@@ -8,6 +8,7 @@ import { StingerOverlay } from '../ui/overlay';
 import { conversationManager } from '../utils/conversation-manager';
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { UI_CONFIG } from '../../shared/constants';
+import { StorageService } from '../../shared/storage/StorageService';
 
 const logger = loggers.content;
 
@@ -288,6 +289,16 @@ export class PromptInterceptor {
    * Check prompt and submit if allowed
    */
   private async checkAndSubmitPrompt(): Promise<void> {
+    // Check if protection is disabled
+    const storage = new StorageService();
+    const config = await storage.getConfig();
+    
+    // If debugMode is false, protection is disabled - allow submission
+    if (!config.debugMode) {
+      logger.info('Protection is disabled, allowing prompt submission');
+      this.submitPrompt();
+      return;
+    }
     if (this.isCheckingPrompt) {
       // Removed debug log for production
       return;

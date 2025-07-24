@@ -5,6 +5,7 @@
 import { stingerClientV2 } from '../../shared/api/StingerClientV2';
 import { loggers } from '../../shared/logging/Logger';
 import { conversationManager } from '../utils/conversation-manager';
+import { StorageService } from '../../shared/storage/StorageService';
 
 const logger = loggers.content;
 
@@ -178,6 +179,15 @@ export class ResponseInterceptor {
    * Check the complete response with guardrails
    */
   private async checkResponse(messageElement: Element, content: string): Promise<void> {
+    // Check if protection is disabled
+    const storage = new StorageService();
+    const config = await storage.getConfig();
+    
+    // If debugMode is false, protection is disabled - skip checking
+    if (!config.debugMode) {
+      logger.info('Protection is disabled, skipping response check');
+      return;
+    }
     if (!content.trim()) {
       return;
     }
