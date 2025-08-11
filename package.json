@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/virtualsteve-star/stinger-plugin#readme",
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.2",
+    "@crxjs/vite-plugin": "^2.1.0",
     "@playwright/test": "^1.54.1",
     "@types/chrome": "^0.1.0",
     "@types/jest": "^30.0.0",
